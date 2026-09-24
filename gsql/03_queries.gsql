@@ -1,0 +1,50 @@
+USE GRAPH FraudGraph
+
+CREATE QUERY card_window(STRING card_id, DATETIME center, UINT hours = 72) FOR GRAPH FraudGraph {
+  SumAccum<DOUBLE> @@amount;
+  SetAccum<STRING> @@regions;
+  SetAccum<STRING> @@devices;
+  Seed = {Card.*};
+  Tx = SELECT t FROM Seed:c -(MADE:e)-> Transaction:t
+       WHERE c.card_id == card_id
+         AND abs(datetime_diff(t.ts, center)) <= hours * 3600
+       ACCUM @@amount += t.amount,
+             @@regions += t.billing_region
+       ORDER BY t.ts ASC;
+  PRINT Tx, @@amount AS window_amount, @@regions AS regions;
+}
+
+CREATE QUERY device_ring(STRING device_id, DATETIME center, UINT days = 30) FOR GRAPH FraudGraph {
+  SetAccum<STRING> @@cards;
+  Device = {DeviceProfile.*};
+  Tx = SELECT t FROM Device:d <-(FROM_DEVICE:e)- Transaction:t
+       WHERE d.device_id == device_id
+         AND abs(datetime_diff(t.ts, center)) <= days * 86400;
+  Cards = SELECT c FROM Tx:t <-(MADE:e)- Card:c ACCUM @@cards += c.card_id;
+  PRINT Tx, Cards, @@cards AS connected_cards;
+}
+
+CREATE QUERY customer_baseline(STRING customer_id) FOR GRAPH FraudGraph {
+  AvgAccum @@avg_amount;
+  MapAccum<STRING, SumAccum<UINT>> @@channels;
+  MapAccum<STRING, SumAccum<UINT>> @@regions;
+  CustomerSeed = {Customer.*};
+  Tx = SELECT t FROM CustomerSeed:c -(OWNS:e1)-> Card:k -(MADE:e2)-> Transaction:t
+       WHERE c.customer_id == customer_id
+       ACCUM @@avg_amount += t.amount,
+             @@channels += (t.channel -> 1),
+             @@regions += (t.billing_region -> 1);
+  PRINT Tx, @@avg_amount AS avg_amount, @@channels AS channel_counts,
+        @@regions AS region_counts;
+}
+
+CREATE QUERY similar_closed_cases(STRING card_id, STRING pattern, UINT limit = 5) FOR GRAPH FraudGraph {
+  Seed = {Card.*};
+  Cases = SELECT cc FROM Seed:c <-(ON_CARD:e)- ClosedCase:cc
+          WHERE c.card_id == card_id OR cc.pattern == pattern
+          ORDER BY cc.closed_at DESC
+          LIMIT limit;
+  PRINT Cases;
+}
+
+INSTALL QUERY card_window, device_ring, customer_baseline, similar_closed_cases

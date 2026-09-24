@@ -1,0 +1,97 @@
+{
+  "case_id": "HHG-015",
+  "case": {
+    "status": "closed_fraud",
+    "verdict": "fraud",
+    "fraud_probability": 0.91,
+    "pattern": "card_not_present_new_device",
+    "pattern_description": "",
+    "affected_txn_ids": [
+      "3464869"
+    ],
+    "first_suspicious_txn_id": "3464869",
+    "connected_card_ids": [],
+    "connected_device_profiles": [],
+    "exposure_usd": 599.94,
+    "evidence": [
+      {
+        "claim": "The account had 68 earlier transactions; the flagged $599.94 amount is at the 100% historical percentile (median $99.96).",
+        "source": "graph",
+        "ref": "query:card_baseline(customer_id=C03042)",
+        "entity_ids": [
+          "3464869"
+        ]
+      },
+      {
+        "claim": "The suspicious episode contains 1 transaction(s) totaling $599.94.",
+        "source": "graph",
+        "ref": "query:transaction_window(txn_id=3464869)",
+        "entity_ids": [
+          "3464869"
+        ]
+      },
+      {
+        "claim": "Customer denied the purchase in the simulated verification step.",
+        "source": "customer",
+        "ref": "evidence_request:1",
+        "entity_ids": [
+          "C03042-K1",
+          "3464869"
+        ]
+      }
+    ],
+    "similar_prior_cases": [
+      "CC-0615",
+      "CC-3886"
+    ],
+    "summary": "GraphSentinel identified card not present new device involving 1 transaction(s) and $599.94 exposure. The conclusion combines account baseline, episode structure, prior-case memory, and customer denial when present. Actions are policy-routed and do not rely on the model score as a verdict.",
+    "written_to_graph": true,
+    "graph_case_id": "HHG-015"
+  },
+  "evidence_requests": [
+    {
+      "type": "customer_validation",
+      "asked_after_step": 5,
+      "assumed_response": "Customer denies the purchase and confirms possession of the physical card."
+    }
+  ],
+  "next_best_actions": {
+    "initial": [
+      {
+        "action": "VERIFY_WITH_CUSTOMER",
+        "route": "auto",
+        "reason": "R1: verify the unusual new-device purchase before blocking"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "Policy 3a: probability exceeds 0.30"
+      }
+    ],
+    "final": [
+      {
+        "action": "BLOCK_CARD",
+        "route": "L1",
+        "reason": "R2: confirmed or strongly supported fraud; $599.94 exposure"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "R2 and policy 3a: preserve the investigation and evidence"
+      }
+    ],
+    "what_changed": "The simulated denial converted a new-device anomaly into confirmed fraud under R2."
+  },
+  "sar": {
+    "file": false,
+    "reason": "Policy 3a: exposure is below $1,000 with no reliable shared origin, so retain the case without a SAR.",
+    "narrative": "",
+    "subjects": [],
+    "total_amount_usd": 0,
+    "activity_dates": []
+  },
+  "stop_reason": "Customer denial and corroborating graph evidence settle the verdict; the relevant episode and connected entities have been bounded.",
+  "tool_calls": 7,
+  "tokens": 1320,
+  "latency_s": 1.7
+}

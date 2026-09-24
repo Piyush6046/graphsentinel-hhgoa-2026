@@ -1,0 +1,38 @@
+USE GRAPH FraudGraph
+
+CREATE LOADING JOB load_transactions FOR GRAPH FraudGraph {
+  DEFINE FILENAME transactions_file;
+  DEFINE HEADER tx_header = "TransactionID", "customer_id", "ts", "TransactionAmt", "ProductCD", "channel", "risk_score", "addr1", "P_emaildomain", "card4", "card6", "card_id", "device_profile", "DeviceInfo", "DeviceType", "id_30", "id_31", "id_33", "id_15", "id_23", "device_id";
+  LOAD transactions_file TO VERTEX Customer VALUES($"customer_id") USING HEADER="true", USER_DEFINED_HEADER="tx_header", SEPARATOR=",";
+  LOAD transactions_file TO VERTEX Card VALUES($"card_id", $"card4", $"card6") USING HEADER="true", USER_DEFINED_HEADER="tx_header", SEPARATOR=",";
+  LOAD transactions_file TO VERTEX Transaction VALUES(
+    $"TransactionID", $"ts", $"TransactionAmt", $"ProductCD", $"channel",
+    $"risk_score", $"addr1", $"P_emaildomain"
+  ) USING HEADER="true", USER_DEFINED_HEADER="tx_header", SEPARATOR=",";
+  LOAD transactions_file TO EDGE OWNS VALUES($"customer_id", $"card_id") USING HEADER="true", USER_DEFINED_HEADER="tx_header", SEPARATOR=",";
+  LOAD transactions_file TO EDGE MADE VALUES($"card_id", $"TransactionID") USING HEADER="true", USER_DEFINED_HEADER="tx_header", SEPARATOR=",";
+  LOAD transactions_file TO VERTEX EmailDomain VALUES($"P_emaildomain")
+    WHERE $"P_emaildomain" != "" USING HEADER="true", USER_DEFINED_HEADER="tx_header", SEPARATOR=",";
+  LOAD transactions_file TO EDGE PURCHASER_EMAIL VALUES($"TransactionID", $"P_emaildomain")
+    WHERE $"P_emaildomain" != "" USING HEADER="true", USER_DEFINED_HEADER="tx_header", SEPARATOR=",";
+  LOAD transactions_file TO VERTEX BillingRegion VALUES($"addr1")
+    WHERE $"addr1" != "" USING HEADER="true", USER_DEFINED_HEADER="tx_header", SEPARATOR=",";
+  LOAD transactions_file TO EDGE BILLED_IN VALUES($"TransactionID", $"addr1")
+    WHERE $"addr1" != "" USING HEADER="true", USER_DEFINED_HEADER="tx_header", SEPARATOR=",";
+  LOAD transactions_file TO VERTEX DeviceProfile VALUES(
+    $"device_id", $"DeviceInfo", $"DeviceType", $"id_30", $"id_31", $"id_33",
+    $"id_15", $"id_23"
+  ) WHERE $"device_id" != "" USING HEADER="true", USER_DEFINED_HEADER="tx_header", SEPARATOR=",";
+  LOAD transactions_file TO EDGE FROM_DEVICE VALUES($"TransactionID", $"device_id")
+    WHERE $"device_id" != "" USING HEADER="true", USER_DEFINED_HEADER="tx_header", SEPARATOR=",";
+}
+
+CREATE LOADING JOB load_closed_cases FOR GRAPH FraudGraph {
+  DEFINE FILENAME cases_file;
+  DEFINE HEADER cases_header = "case_id", "customer_id", "card_id", "opened_at", "closed_at", "outcome", "pattern", "first_fraud_txn_id", "txn_ids", "n_txns", "exposure_usd", "connected_card_ids", "actions_taken", "report_filed", "analyst_notes";
+  LOAD cases_file TO VERTEX ClosedCase VALUES(
+    $"case_id", $"opened_at", $"closed_at", $"outcome", $"pattern",
+    $"exposure_usd", $"analyst_notes"
+  ) USING HEADER="true", USER_DEFINED_HEADER="cases_header", SEPARATOR=",";
+  LOAD cases_file TO EDGE ON_CARD VALUES($"case_id", $"card_id") USING HEADER="true", USER_DEFINED_HEADER="cases_header", SEPARATOR=",";
+}

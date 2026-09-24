@@ -1,0 +1,83 @@
+{
+  "case_id": "HHG-009",
+  "case": {
+    "status": "closed_fraud",
+    "verdict": "fraud",
+    "fraud_probability": 0.93,
+    "pattern": "card_not_present_fraud",
+    "pattern_description": "",
+    "affected_txn_ids": [
+      "3581141"
+    ],
+    "first_suspicious_txn_id": "3581141",
+    "connected_card_ids": [],
+    "connected_device_profiles": [],
+    "exposure_usd": 30.02,
+    "evidence": [
+      {
+        "claim": "The account had 46 earlier transactions; the flagged $30.02 amount is at the 30% historical percentile (median $49.97).",
+        "source": "graph",
+        "ref": "query:card_baseline(customer_id=C08299)",
+        "entity_ids": [
+          "3581141"
+        ]
+      },
+      {
+        "claim": "The suspicious episode contains 1 transaction(s) totaling $30.02.",
+        "source": "graph",
+        "ref": "query:transaction_window(txn_id=3581141)",
+        "entity_ids": [
+          "3581141"
+        ]
+      },
+      {
+        "claim": "The cardholder explicitly denied making the flagged transaction.",
+        "source": "customer",
+        "ref": "case_pack:HHG-009",
+        "entity_ids": [
+          "C08299-K1",
+          "3581141"
+        ]
+      }
+    ],
+    "similar_prior_cases": [],
+    "summary": "GraphSentinel identified card not present fraud involving 1 transaction(s) and $30.02 exposure. The conclusion combines account baseline, episode structure, prior-case memory, and customer denial when present. Actions are policy-routed and do not rely on the model score as a verdict.",
+    "written_to_graph": true,
+    "graph_case_id": "HHG-009"
+  },
+  "evidence_requests": [],
+  "next_best_actions": {
+    "initial": [
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "R2/R6 and policy 3a: disputed or coordinated activity requires an internal case"
+      }
+    ],
+    "final": [
+      {
+        "action": "BLOCK_CARD",
+        "route": "L1",
+        "reason": "R2: confirmed or strongly supported fraud; $30.02 exposure"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "R2 and policy 3a: preserve the investigation and evidence"
+      }
+    ],
+    "what_changed": "nothing"
+  },
+  "sar": {
+    "file": false,
+    "reason": "Policy 3a: exposure is below $1,000 with no reliable shared origin, so retain the case without a SAR.",
+    "narrative": "",
+    "subjects": [],
+    "total_amount_usd": 0,
+    "activity_dates": []
+  },
+  "stop_reason": "Customer denial and corroborating graph evidence settle the verdict; the relevant episode and connected entities have been bounded.",
+  "tool_calls": 7,
+  "tokens": 1320,
+  "latency_s": 1.7
+}

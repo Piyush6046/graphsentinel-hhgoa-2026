@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "tigergraph": {
+      "command": "uvx",
+      "args": ["tigergraph-mcp"],
+      "env": {
+        "TIGERGRAPH_HOST": "${TIGERGRAPH_HOST}",
+        "TIGERGRAPH_GRAPH": "${TIGERGRAPH_GRAPH}",
+        "TIGERGRAPH_TOKEN": "${TIGERGRAPH_TOKEN}"
+      }
+    }
+  }
+}
+

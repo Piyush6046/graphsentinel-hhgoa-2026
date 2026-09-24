@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="NexusWatch AI — Next-Gen Autonomous Graph-Powered Fraud Intelligence and Deterministic Investigation Console on TigerGraph.">
+  <title>NexusWatch AI · Graph Fraud Intelligence Console</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2300f5ff'/%3E%3Cstop offset='100%25' stop-color='%237928ca'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='%230a0f1d'/%3E%3Cpath d='M16 44V20l16-9 16 9v24l-16 9z' fill='none' stroke='url(%23g)' stroke-width='4'/%3E%3Ccircle cx='32' cy='32' r='6' fill='%2300f5ff'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Top Navigation Bar -->
+  <header class="topbar">
+    <div class="brand-group">
+      <a class="brand" href="#" aria-label="NexusWatch AI home">
+        <div class="brand-logo">
+          <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <polygon points="16,3 28,10 28,22 16,29 4,22 4,10" stroke="url(#logo-grad)" stroke-width="2.5" fill="rgba(0, 245, 255, 0.08)" />
+            <circle cx="16" cy="16" r="4" fill="#00f5ff" />
+            <defs>
+              <linearGradient id="logo-grad" x1="4" y1="3" x2="28" y2="29" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#00f5ff" />
+                <stop offset="1" stop-color="#a855f7" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">NexusWatch<span class="ai-badge">AI</span></span>
+          <span class="brand-subtitle">TigerGraph Investigation Matrix</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="header-center">
+      <div class="system-status">
+        <span class="status-indicator live"></span>
+        <span class="status-label">GRAPH ACTIVE</span>
+        <span class="status-sep">/</span>
+        <span class="status-detail">FraudGraph Savanna v3.9</span>
+      </div>
+      <div class="system-status engine-pill">
+        <span class="status-icon">⚡</span>
+        <span>Deterministic Policy R1–R10</span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button id="exportAllBtn" class="btn-secondary" title="Export current investigation bundle to JSON">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>Export Bundle</span>
+      </button>
+      <button id="themeToggle" class="btn-icon" aria-label="Toggle Theme Mode" title="Toggle Theme">
+        <svg class="theme-icon sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="main-container">
+    <!-- Hero / KPI Overview -->
+    <section class="kpi-banner">
+      <div class="kpi-intro">
+        <div class="kpi-tag">
+          <span class="sparkle">✦</span> AUTONOMOUS GRAPH FRAUD SURVEILLANCE
+        </div>
+        <h1>Graph-Traversed Evidence.<br><span class="gradient-text">Deterministic Accountability.</span></h1>
+        <p class="kpi-desc">NexusWatch connects transaction subgraphs, device hardware fingerprints, and institutional memory across 5,500+ cases. Decisions are governed by strict R1–R10 policy gates.</p>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-card-header">
+            <span class="kpi-icon fraud-icon">🚨</span>
+            <span class="kpi-title">FRAUD DETECTED</span>
+          </div>
+          <div class="kpi-value" id="kpiFraudCount">10</div>
+          <div class="kpi-footnote text-fraud">50.0% of cohort · SAR Filed</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-card-header">
+            <span class="kpi-icon legit-icon">🛡️</span>
+            <span class="kpi-title">CLEARED / BENIGN</span>
+          </div>
+          <div class="kpi-value" id="kpiLegitCount">10</div>
+          <div class="kpi-footnote text-legit">Verified by graph baseline</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-card-header">
+            <span class="kpi-icon exposure-icon">💎</span>
+            <span class="kpi-title">TOTAL EXPOSURE</span>
+          </div>
+          <div class="kpi-value" id="kpiExposure">$0.00</div>
+          <div class="kpi-footnote">Aggregated risk pool</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-card-header">
+            <span class="kpi-icon queue-icon">⚡</span>
+            <span class="kpi-title">TOTAL CASES</span>
+          </div>
+          <div class="kpi-value" id="kpiTotalCount">20</div>
+          <div class="kpi-footnote">100% policy audited</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Investigation Console Workspace -->
+    <section class="investigation-workspace">
+      <!-- Left Panel: Case Queue & Live Filter -->
+      <aside class="queue-panel">
+        <div class="panel-header">
+          <div class="queue-title-row">
+            <div class="section-title">
+              <span class="title-bullet"></span>
+              <h3>INVESTIGATION QUEUE</h3>
+            </div>
+            <span id="filteredCountBadge" class="badge-count">20 CASES</span>
+          </div>
+
+          <div class="search-box">
+            <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input id="caseSearchInput" type="search" placeholder="Search case ID, card, pattern..." autocomplete="off">
+            <button id="clearSearchBtn" class="clear-btn" style="display:none;">✕</button>
+          </div>
+
+          <div class="filter-pills" role="tablist">
+            <button class="filter-pill active" data-filter="all">All (20)</button>
+            <button class="filter-pill filter-fraud" data-filter="fraud">Fraud (10)</button>
+            <button class="filter-pill filter-legit" data-filter="legitimate">Cleared (10)</button>
+            <button class="filter-pill filter-high" data-filter="high-risk">High Exp</button>
+          </div>
+        </div>
+
+        <div id="caseQueueList" class="queue-list" role="listbox" aria-label="Case list">
+          <!-- Populated by JS -->
+          <div class="skeleton-row"></div>
+          <div class="skeleton-row"></div>
+          <div class="skeleton-row"></div>
+        </div>
+      </aside>
+
+      <!-- Right Panel: Dynamic Case Detail -->
+      <article id="caseDetailPanel" class="detail-panel">
+        <!-- Populated dynamically by app.js -->
+        <div class="empty-state">
+          <div class="spinner"></div>
+          <p>Connecting to TigerGraph Evidence Ledger…</p>
+        </div>
+      </article>
+    </section>
+
+    <!-- Architecture & Decision Matrix -->
+    <section class="arch-section">
+      <div class="arch-header">
+        <div class="kpi-tag"><span class="sparkle">❖</span> PIPELINE BLUEPRINT</div>
+        <h2>Autonomous Agentic Pipeline on TigerGraph</h2>
+        <p>Zero hallucination risk. The LLM generates human-readable explanations while all verdict classifications and action routes are bounded by deterministic GSQL query results and policy rules R1–R10.</p>
+      </div>
+
+      <div class="arch-pipeline">
+        <div class="pipeline-step">
+          <div class="step-num">01</div>
+          <div class="step-content">
+            <h4>Trigger Ingestion</h4>
+            <p>Real-time transaction stream flags anomaly, chargeback alert, or high model risk score.</p>
+            <span class="step-tag">RESTPP Webhook</span>
+          </div>
+        </div>
+
+        <div class="pipeline-arrow">➔</div>
+
+        <div class="pipeline-step">
+          <div class="step-num">02</div>
+          <div class="step-content">
+            <h4>Graph Traversal</h4>
+            <p>TigerGraph GSQL traverses multi-hop card, device hardware profile, and IP merchant clusters.</p>
+            <span class="step-tag">GSQL Subgraphs</span>
+          </div>
+        </div>
+
+        <div class="pipeline-arrow">➔</div>
+
+        <div class="pipeline-step">
+          <div class="step-num">03</div>
+          <div class="step-content">
+            <h4>Memory Retrieval</h4>
+            <p>Retrieves high-similarity historical closed cases and confirmed fraud archetypes from graph memory.</p>
+            <span class="step-tag">Institutional Memory</span>
+          </div>
+        </div>
+
+        <div class="pipeline-arrow">➔</div>
+
+        <div class="pipeline-step">
+          <div class="step-num">04</div>
+          <div class="step-content">
+            <h4>Deterministic Policy</h4>
+            <p>R1–R10 rule gate enforces customer verification, SAR filing thresholds, and auto-freeze execution.</p>
+            <span class="step-tag">R1–R10 Engine</span>
+          </div>
+        </div>
+
+        <div class="pipeline-arrow">➔</div>
+
+        <div class="pipeline-step highlight">
+          <div class="step-num">05</div>
+          <div class="step-content">
+            <h4>Graph Writeback</h4>
+            <p>Persists newly audited case node & verdict back into TigerGraph to continuously train future runs.</p>
+            <span class="step-tag">Writeback Node</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-left">
+      <span class="footer-brand">NexusWatch AI</span>
+      <span class="footer-sep">·</span>
+      <span>Autonomous Fraud Intelligence Matrix</span>
+      <span class="footer-sep">·</span>
+      <span>TigerGraph × Hackathon Goa 2026</span>
+    </div>
+    <div class="footer-right">
+      <span class="footer-status"><span class="pulse-dot"></span>20/20 Scored Cases Grounded & Verified</span>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+.DS_Store
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+data/transactions.csv
+data/identity.csv
+data/*.parquet
+data/graph_transactions.csv
+artifacts/

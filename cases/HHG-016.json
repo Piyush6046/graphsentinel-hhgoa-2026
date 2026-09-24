@@ -1,0 +1,126 @@
+{
+  "case_id": "HHG-016",
+  "case": {
+    "status": "closed_fraud",
+    "verdict": "fraud",
+    "fraud_probability": 0.98,
+    "pattern": "card_not_present_new_device",
+    "pattern_description": "",
+    "affected_txn_ids": [
+      "3534820"
+    ],
+    "first_suspicious_txn_id": "3534820",
+    "connected_card_ids": [
+      "C09791-K1",
+      "C03095-K2",
+      "C10837-K2"
+    ],
+    "connected_device_profiles": [
+      "windows | unknown | edge 16.0 | unknown"
+    ],
+    "exposure_usd": 59.67,
+    "evidence": [
+      {
+        "claim": "The account had 48 earlier transactions; the flagged $59.67 amount is at the 75% historical percentile (median $37.75).",
+        "source": "graph",
+        "ref": "query:card_baseline(customer_id=C09988)",
+        "entity_ids": [
+          "3534820"
+        ]
+      },
+      {
+        "claim": "The suspicious episode contains 1 transaction(s) totaling $59.67.",
+        "source": "graph",
+        "ref": "query:transaction_window(txn_id=3534820)",
+        "entity_ids": [
+          "3534820"
+        ]
+      },
+      {
+        "claim": "The cardholder explicitly denied making the flagged transaction.",
+        "source": "customer",
+        "ref": "case_pack:HHG-016",
+        "entity_ids": [
+          "C09988-K1",
+          "3534820"
+        ]
+      },
+      {
+        "claim": "The exact device profile is linked to confirmed closed fraud cases and other cards.",
+        "source": "graph",
+        "ref": "query:device_neighbors",
+        "entity_ids": [
+          "CC-0497",
+          "CC-2540",
+          "CC-5057",
+          "C09791-K1",
+          "C03095-K2",
+          "C10837-K2"
+        ]
+      }
+    ],
+    "similar_prior_cases": [
+      "CC-0497",
+      "CC-2540",
+      "CC-5057"
+    ],
+    "summary": "GraphSentinel identified card not present new device involving 1 transaction(s) and $59.67 exposure. The conclusion combines account baseline, episode structure, prior-case memory, and customer denial when present. Actions are policy-routed and do not rely on the model score as a verdict.",
+    "written_to_graph": true,
+    "graph_case_id": "HHG-016"
+  },
+  "evidence_requests": [],
+  "next_best_actions": {
+    "initial": [
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "R2/R6 and policy 3a: disputed or coordinated activity requires an internal case"
+      }
+    ],
+    "final": [
+      {
+        "action": "BLOCK_CARD",
+        "route": "L1",
+        "reason": "R2: confirmed or strongly supported fraud; $59.67 exposure"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "R2 and policy 3a: preserve the investigation and evidence"
+      },
+      {
+        "action": "MONITOR_CONNECTED_CARDS",
+        "route": "auto",
+        "reason": "R6: cards sharing the fraud-linked device require monitoring"
+      },
+      {
+        "action": "FILE_REPORT",
+        "route": "L2",
+        "reason": "R2/R6/R9 and policy 3a: strong suspicion plus high exposure, shared origin, or coordination"
+      }
+    ],
+    "what_changed": "nothing"
+  },
+  "sar": {
+    "file": true,
+    "reason": "Policy 3a: strong suspicion plus a shared or coordinated origin",
+    "narrative": "Customer C09988, using card C09988-K1, was associated with suspicious transactions 3534820 between 2016-12-11 and 2016-12-11. The transactions were for $59.67, totaling $59.67. They occurred through the online channel and were identified as card not present new device activity. The cardholder denied the flagged purchase where customer confirmation was available. The activity used device profile windows | unknown | edge 16.0 | unknown, which also appears on confirmed closed fraud cases. Graph traversal and prior-case retrieval showed that the activity was not adequately explained by the risk score alone. The institution opened an internal case and preserved the supporting transaction and relationship evidence. Protective action and monitoring were recommended under the supplied fraud policy.",
+    "subjects": [
+      "C09988",
+      "C09988-K1",
+      "C09791-K1",
+      "C03095-K2",
+      "C10837-K2",
+      "windows | unknown | edge 16.0 | unknown"
+    ],
+    "total_amount_usd": 59.67,
+    "activity_dates": [
+      "2016-12-11",
+      "2016-12-11"
+    ]
+  },
+  "stop_reason": "Customer denial and corroborating graph evidence settle the verdict; the relevant episode and connected entities have been bounded.",
+  "tool_calls": 9,
+  "tokens": 1760,
+  "latency_s": 2.2
+}
