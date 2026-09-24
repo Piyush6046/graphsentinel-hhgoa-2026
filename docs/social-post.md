@@ -20,7 +20,7 @@ Key Architecture Highlights:
 
 My favorite insight: An alert with a trivial **0.05 model risk score** expanded through TigerGraph into an undocumented shared-device ring connected to 4 confirmed historical fraud cases!
 
-GitHub Repository: https://github.com/<YOUR-USERNAME>/<YOUR-REPO-NAME>
+GitHub Repository: https://github.com/Piyush6046/graphsentinel-hhgoa-2026
 
 Huge thanks to @TigerGraphDB and @247pmstudio for hosting such an impactful and rigorous challenge! 
 

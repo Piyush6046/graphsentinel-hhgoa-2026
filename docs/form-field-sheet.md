@@ -14,14 +14,14 @@ Use this cheat sheet to fill out the official Google Form:
 | **Team size\*** | `1` (or your actual team size: 1, 2, or 3) | Select radio button |
 | **Lead: Name, Email, Phone Number\*** | `Piyush Badode, badodepiyush@gmail.com, +91XXXXXXXXXX` | *Update with your phone number* |
 | **Member 2 / Member 3** | *(Leave blank if solo or add teammate details)* | Name, Email, Phone |
-| **Public GitHub repo URL\*** | `https://github.com/<YOUR-USERNAME>/<YOUR-REPO-NAME>` | Paste your public GitHub URL |
+| **Public GitHub repo URL\*** | `https://github.com/Piyush6046/graphsentinel-hhgoa-2026` | Paste your public GitHub URL |
 | **20 answer files in cases/ confirmation\*** | `Yes` | All 20 files are in `cases/` (`HHG-001.json` to `HHG-020.json`) |
-| **Demo video URL (3–5 min)\*** | `https://youtu.be/...` (or Google Drive / Loom / GitHub Release link) | Record using `docs/demo-narration.txt` |
+| **Demo video URL (3–5 min)\*** | *(Paste your YouTube / Loom / Google Drive video link)* | Record using `docs/demo-narration.txt` |
 | **Live UI URL (optional)** | *(Optional)* or `http://localhost:4173` (or leave empty) | Optional field |
 | **LLM model used\*** | `OpenAI GPT-4o / GPT-5 (Evidence Synthesis & RAG) + Deterministic Policy Engine (R1–R10)` | Safe, grounded hybrid setup |
 | **Agent framework used\*** | `Custom Python GraphRAG Orchestrator + TigerGraph RESTPP / GSQL Query Engine` | |
 | **Social post URLs\*** | *(Paste your LinkedIn/Twitter post link)* | Template ready in `docs/social-post.md` |
-| **Technical blog URL\*** | `https://github.com/<YOUR-USERNAME>/<YOUR-REPO>/blob/main/docs/technical-blog.md` (or Hashnode / Dev.to / Medium link) | Ready in `docs/technical-blog.md` |
+| **Technical blog URL\*** | `https://github.com/Piyush6046/graphsentinel-hhgoa-2026/blob/main/docs/technical-blog.md` | Ready in `docs/technical-blog.md` |
 | **TigerGraph deployment\*** | `Community Edition` (or `Savanna` based on your instance) | |
 
 ---
