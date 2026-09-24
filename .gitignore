@@ -9,3 +9,4 @@ data/identity.csv
 data/*.parquet
 data/graph_transactions.csv
 artifacts/
+docs/
