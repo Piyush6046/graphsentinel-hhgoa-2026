@@ -4,9 +4,22 @@
 __pycache__/
 .pytest_cache/
 *.pyc
+
+# raw / large data
 data/transactions.csv
 data/identity.csv
 data/*.parquet
 data/graph_transactions.csv
+dl/data/
+*.parquet
+train_transaction.csv
+train_identity.csv
+test_transaction.csv
+test_identity.csv
+
+# model weights and artifacts
 artifacts/
-docs/
+dl/checkpoints/
+*.pt
+*.pth
+*.ckpt
