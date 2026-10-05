@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
-from dl.src.config import PipelineConfig, get_default_data_dir, get_default_output_dir, set_seeds
+from dl.src.config import PipelineConfig, get_default_data_dir, get_default_output_dir, save_json, set_seeds
 
 
 def find_file(directory: Path, candidates: List[str]) -> Path | None:
@@ -278,8 +278,7 @@ def prepare_data(config: PipelineConfig) -> Tuple[Dict[str, pd.DataFrame], Dict[
             config.out_dir / f"{name}_meta.parquet", index=False
         )
 
-    with open(config.out_dir / "feature_names.json", "w") as f:
-        json.dump(feature_names, f, indent=2)
+    save_json(config.out_dir / "feature_names.json", feature_names)
 
     print(f"[+] Successfully saved preprocessed data to {config.out_dir}")
     return dfs, arrays, feature_names

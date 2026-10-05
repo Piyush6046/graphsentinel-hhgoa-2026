@@ -6,6 +6,7 @@ centralized here and can be overridden via CLI arguments or environment variable
 
 from __future__ import annotations
 
+import json
 import os
 import random
 from dataclasses import dataclass, field
@@ -14,6 +15,31 @@ from typing import List
 
 import numpy as np
 import torch
+
+
+class NumpyJSONEncoder(json.JSONEncoder):
+    """Custom JSON encoder converting NumPy types to standard Python primitives."""
+
+    def default(self, obj):
+        if isinstance(obj, (np.integer, np.int64, np.int32, np.int16, np.int8)):
+            return int(obj)
+        elif isinstance(obj, (np.floating, np.float32, np.float64, np.float16)):
+            return float(obj)
+        elif isinstance(obj, (np.ndarray,)):
+            return obj.tolist()
+        elif isinstance(obj, (np.bool_,)):
+            return bool(obj)
+        elif isinstance(obj, Path):
+            return str(obj)
+        return super().default(obj)
+
+
+def save_json(path: Path | str, data: object, indent: int = 2) -> None:
+    """Safely serialize and write data containing numpy types to a JSON file."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w") as f:
+        json.dump(data, f, cls=NumpyJSONEncoder, indent=indent)
 
 
 def set_seeds(seed: int = 42) -> None:

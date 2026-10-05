@@ -21,7 +21,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from sklearn.metrics import average_precision_score, roc_auc_score
 
-from dl.src.config import PipelineConfig, get_default_checkpoint_dir, get_default_output_dir, set_seeds
+from dl.src.config import PipelineConfig, get_default_checkpoint_dir, get_default_output_dir, save_json, set_seeds
 
 # Try importing PyTorch Geometric; fallback to Pure-PyTorch Sparse SAGE if unavailable
 try:
@@ -287,8 +287,7 @@ def run_gnn_pipeline(config: PipelineConfig) -> Dict[str, Dict[str, float]]:
     _, _, pr_no_ae, roc_no_ae, _ = train_gnn_model(config, use_ae_features=False, model_suffix="gnn")
     results["GNN"] = {"PR-AUC": pr_no_ae, "ROC-AUC": roc_no_ae}
 
-    with open(config.out_dir / "gnn_results.json", "w") as f:
-        json.dump(results, f, indent=2)
+    save_json(config.out_dir / "gnn_results.json", results)
 
     return results
 

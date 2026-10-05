@@ -19,7 +19,7 @@ from sklearn.metrics import average_precision_score, roc_auc_score
 from torch.utils.data import DataLoader, TensorDataset
 import xgboost as xgb
 
-from dl.src.config import PipelineConfig, get_default_checkpoint_dir, get_default_output_dir, set_seeds
+from dl.src.config import PipelineConfig, get_default_checkpoint_dir, get_default_output_dir, save_json, set_seeds
 
 
 class TabularMLP(nn.Module):
@@ -289,8 +289,7 @@ def run_baselines(config: PipelineConfig) -> Dict[str, Dict[str, float]]:
         np.save(config.out_dir / "preds_test_lgb_graph.npy", test_lgb_g)
         np.save(config.out_dir / "preds_val_lgb_graph.npy", val_lgb_g)
 
-    with open(config.out_dir / "baseline_results.json", "w") as f:
-        json.dump(results, f, indent=2)
+    save_json(config.out_dir / "baseline_results.json", results)
 
     print(f"[+] Baseline evaluation complete. Artifacts saved to {config.out_dir}")
     return results

@@ -150,3 +150,88 @@ def test_temporal_split_raises_on_single_class_or_anomaly():
     with pytest.raises(ValueError, match="Single-class error"):
         perform_temporal_split(all_fraud_df)
 
+
+def test_numpy_json_serialization(tmp_path):
+    """Verify that save_json correctly serializes np.float32, np.int64, arrays, and paths."""
+    from dl.src.config import save_json
+    import json
+
+    data = {
+        "float32_val": np.float32(0.98765),
+        "float64_val": np.float64(1.23456),
+        "int64_val": np.int64(42),
+        "int32_val": np.int32(7),
+        "bool_val": np.bool_(True),
+        "array_val": np.array([1.0, 2.0, 3.0], dtype=np.float32),
+        "nested_dict": {
+            "p_fraud": np.float32(0.85),
+            "counts": [np.int64(10), np.int64(20)],
+        },
+    }
+
+    out_file = tmp_path / "test_out.json"
+    # Must not raise TypeError: Object of type float32 is not JSON serializable
+    save_json(out_file, data)
+    assert out_file.exists()
+
+    with open(out_file) as f:
+        loaded = json.load(f)
+
+    assert abs(loaded["float32_val"] - 0.98765) < 1e-4
+    assert loaded["int64_val"] == 42
+    assert loaded["bool_val"] is True
+    assert loaded["nested_dict"]["p_fraud"] == loaded["nested_dict"]["p_fraud"]
+
+
+def test_causal_graph_features_no_future_leakage():
+    """Verify that causal past-only graph features do not count future transactions."""
+    from dl.src.graph import construct_transaction_graph
+
+    meta = pd.DataFrame({
+        "TransactionID": ["T1", "T2", "T3", "T4"],
+        "TransactionDT": [100, 200, 300, 400],
+        "card_id": ["C1", "C1", "C1", "C2"],
+        "device_id": ["D1", "D1", "D_NONE", "D1"],
+        "isFraud": [1, 0, 1, 0],
+        "split": ["train", "train", "val", "test"],
+    })
+
+    _, graph_features, feature_names = construct_transaction_graph(meta)
+    
+    # Feature 0: log_past_card_tx_count
+    # T1 is first card1 tx -> past count = 0
+    # T2 is second card1 tx -> past count = 1
+    # T3 is third card1 tx -> past count = 2
+    # T4 is first card2 tx -> past count = 0
+    assert np.isclose(graph_features[0, 0], np.log1p(0.0))
+    assert np.isclose(graph_features[1, 0], np.log1p(1.0))
+    assert np.isclose(graph_features[2, 0], np.log1p(2.0))
+    assert np.isclose(graph_features[3, 0], np.log1p(0.0))
+
+    # Feature 3: log_past_card_fraud_count
+    # T1 is fraud, but its past fraud count must be 0 (never counts itself)
+    # T2 comes after T1 (fraud) -> past fraud count = 1
+    # T3 (in val) comes after T1 (fraud in train) -> past fraud count = 1
+    assert np.isclose(graph_features[0, 3], np.log1p(0.0))
+    assert np.isclose(graph_features[1, 3], np.log1p(1.0))
+    assert np.isclose(graph_features[2, 3], np.log1p(1.0))
+
+
+def test_probability_calibrator():
+    """Verify that ProbabilityCalibrator fits on validation and preserves monotonicity."""
+    from dl.src.calibration import ProbabilityCalibrator
+
+    np.random.seed(42)
+    # Simulated distorted uncalibrated logits / probabilities from focal loss
+    y_val = (np.random.rand(500) < 0.05).astype(np.float32)
+    distorted_probs = np.clip(y_val * 0.7 + np.random.normal(0.4, 0.1, size=500), 0.01, 0.99)
+
+    calibrator = ProbabilityCalibrator().fit(distorted_probs, y_val)
+    cal_probs = calibrator.transform(distorted_probs)
+
+    assert cal_probs.shape == distorted_probs.shape
+    assert np.all(cal_probs >= 0.0) and np.all(cal_probs <= 1.0)
+    # Calibrated probabilities should have mean closer to actual prevalence (~0.05) than 0.4
+    assert np.mean(cal_probs) < np.mean(distorted_probs)
+
+

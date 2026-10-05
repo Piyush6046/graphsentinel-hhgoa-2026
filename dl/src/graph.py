@@ -89,41 +89,49 @@ def construct_transaction_graph(
 
     print(f"[*] Constructed graph with {edge_index.shape[1]:,} directed edges.")
 
-    # 3. Compute Graph Topological Features
-    # Node Degrees
-    card_degrees = meta_df["card_id"].map(meta_df["card_id"].value_counts()).values.astype(np.float32)
-    device_degrees = meta_df["device_id"].map(
-        lambda d: meta_df["device_id"].value_counts().get(d, 1) if d != "D_NONE" else 1
-    ).values.astype(np.float32)
+    # 3. Compute Strictly Causal (Past-Only) Graph Topological Features
+    # Note: meta_df is guaranteed to be sorted chronologically by TransactionDT
 
-    # Graph neighbor degree from edge_index
-    node_degrees = np.zeros(n_nodes, dtype=np.float32)
-    src_nodes, counts = np.unique(edge_index[0].numpy(), return_counts=True)
-    node_degrees[src_nodes] = counts.astype(np.float32)
+    # Causal Past Card Transaction Count: strictly counts transactions BEFORE current row
+    past_card_tx_count = meta_df.groupby("card_id").cumcount().values.astype(np.float32)
 
-    # Historical fraud neighbor signal (strictly calculated using train labels only)
-    # We assign 0 for val/test to prevent future label leakage
-    train_mask = meta_df["split"] == "train"
-    train_fraud_labels = meta_df["isFraud"].copy()
-    train_fraud_labels[~train_mask] = 0.0  # Zero out val/test labels
+    # Causal Past Device Transaction Count: strictly prior transactions on same device
+    device_cumcount = meta_df.groupby("device_id").cumcount().values.astype(np.float32)
+    device_none_mask = (meta_df["device_id"] == "D_NONE").values
+    device_cumcount[device_none_mask] = 0.0
 
-    card_train_fraud_counts = meta_df[train_mask].groupby("card_id")["isFraud"].sum().to_dict()
-    card_train_total_counts = meta_df[train_mask].groupby("card_id")["isFraud"].count().to_dict()
+    # Causal Time-Delta to Prior Transaction on Same Card (in seconds)
+    meta_df["dt_diff"] = meta_df.groupby("card_id")["TransactionDT"].diff().fillna(999999.0)
+    time_since_prior_card_tx = np.log1p(np.maximum(0.0, meta_df["dt_diff"].values)).astype(np.float32)
 
-    historical_card_fraud_ratio = meta_df["card_id"].map(
-        lambda c: (card_train_fraud_counts.get(c, 0.0) / card_train_total_counts.get(c, 1.0))
-        if c in card_train_total_counts else 0.0
-    ).values.astype(np.float32)
+    # Causal Prior Fraud Count on Card: strictly earlier training frauds (never includes row's own label)
+    train_mask = (meta_df["split"] == "train").values
+    train_is_fraud = meta_df["isFraud"].copy()
+    train_is_fraud[~train_mask] = 0
+
+    # For train rows: cumulative fraud count strictly BEFORE current row (cumsum - current)
+    train_cum_fraud = (meta_df[train_mask].groupby("card_id")["isFraud"].cumsum() - meta_df[train_mask]["isFraud"]).values
+    
+    # For val/test rows: total prior frauds observed on this card during the training window
+    card_train_total_frauds = meta_df[train_mask].groupby("card_id")["isFraud"].sum().to_dict()
+    val_test_prior_frauds = meta_df[~train_mask]["card_id"].map(card_train_total_frauds).fillna(0.0).values
+
+    past_card_fraud_count = np.zeros(n_nodes, dtype=np.float32)
+    past_card_fraud_count[train_mask] = train_cum_fraud
+    past_card_fraud_count[~train_mask] = val_test_prior_frauds
 
     graph_features = np.column_stack([
-        np.log1p(card_degrees),
-        np.log1p(device_degrees),
-        np.log1p(node_degrees),
-        historical_card_fraud_ratio,
+        np.log1p(past_card_tx_count),
+        np.log1p(device_cumcount),
+        time_since_prior_card_tx,
+        np.log1p(past_card_fraud_count),
     ]).astype(np.float32)
 
     graph_feature_names = [
-        "log_card_degree", "log_device_degree", "log_graph_degree", "hist_card_fraud_ratio"
+        "log_past_card_tx_count",
+        "log_past_device_tx_count",
+        "log_time_since_prior_card_tx",
+        "log_past_card_fraud_count",
     ]
 
     return edge_index, graph_features, graph_feature_names

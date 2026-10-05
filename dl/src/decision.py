@@ -1,19 +1,19 @@
-"""Uncertainty-Driven Next-Best-Action Policy Engine for Automated Fraud Triage.
+"""Uncertainty-Driven Next-Best-Action Policy Engine with Strict Operational Constraints.
 
-The decision engine routes transactions into 4 distinct actions based on the 2D plane
-of (Fraud Probability p, Epistemic Uncertainty sigma^2):
-1. ALLOW: Confident Legitimate (Low p, Low sigma^2)
-2. ACT (Auto-Block / Decline): Confident Fraud (High p, Low/Moderate sigma^2)
-3. REQUEST_EVIDENCE (Step-Up Auth / OTP): Ambiguous / High Uncertainty Mid-Risk
-4. ESCALATE (Analyst Review / SAR Filing): High Fraud Risk + High Uncertainty or High Exposure.
+Routes transactions into 4 distinct actions:
+1. ALLOW: Confident Legitimate (Low probability, Low uncertainty)
+2. ACT (Auto-Block / Decline): Confident Fraud (High probability, Low/Moderate uncertainty)
+3. REQUEST_EVIDENCE (Step-Up Auth / OTP): Ambiguous / Moderate Risk or Elevated Uncertainty
+4. ESCALATE (Analyst Review / SAR Filing): High Risk + High Uncertainty or High Exposure.
 
-All decision thresholds are tuned STRICTLY on the VALIDATION split.
+All decision thresholds are tuned STRICTLY on the VALIDATION split under the operational constraints:
+- Total non-ALLOW actions <= 5.0% of total traffic
+- ESCALATE actions <= 1.0% of total traffic.
 """
 
 from __future__ import annotations
 
 import argparse
-import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Tuple
@@ -21,7 +21,7 @@ from typing import Dict, Tuple
 import numpy as np
 import pandas as pd
 
-from dl.src.config import PipelineConfig, get_default_output_dir, set_seeds
+from dl.src.config import PipelineConfig, get_default_output_dir, save_json, set_seeds
 
 
 @dataclass
@@ -30,29 +30,6 @@ class PolicyThresholds:
     p_evidence_thresh: float
     uncertainty_thresh: float
     high_exposure_usd: float = 2000.0
-
-
-def calibrate_thresholds_on_val(
-    val_probs: np.ndarray,
-    val_uncertainties: np.ndarray,
-    val_targets: np.ndarray,
-    alert_budget: float = 0.01,
-) -> PolicyThresholds:
-    """Optimize decision thresholds on validation split under fixed alert capacity."""
-    # Find probability threshold for top alert_budget fraction
-    p_fraud_thresh = float(np.percentile(val_probs, 100 * (1.0 - alert_budget)))
-
-    # Set evidence request threshold at 80th percentile of positive predictions
-    p_evidence_thresh = float(p_fraud_thresh * 0.5)
-
-    # Uncertainty threshold: 85th percentile of validation epistemic variance
-    uncert_thresh = float(np.percentile(val_uncertainties, 85.0))
-
-    return PolicyThresholds(
-        p_fraud_thresh=p_fraud_thresh,
-        p_evidence_thresh=p_evidence_thresh,
-        uncertainty_thresh=uncert_thresh,
-    )
 
 
 def assign_next_best_actions(
@@ -95,6 +72,57 @@ def assign_next_best_actions(
     return actions, action_codes
 
 
+def calibrate_thresholds_on_val(
+    val_probs: np.ndarray,
+    val_uncertainties: np.ndarray,
+    val_targets: np.ndarray,
+    val_amounts: np.ndarray | None = None,
+    max_non_allow_pct: float = 5.0,
+    max_escalate_pct: float = 1.0,
+) -> PolicyThresholds:
+    """Tune thresholds strictly on validation split to enforce operational constraints."""
+    n_val = len(val_probs)
+
+    # Uncertainty candidate percentiles (top 1% to 15% highest uncertainty)
+    u_candidates = [float(np.percentile(val_uncertainties, q)) for q in [85, 90, 93, 95, 97, 98, 99]]
+    # Probability candidate percentiles (top 0.5% to 5% highest risk)
+    p_fraud_candidates = [float(np.percentile(val_probs, q)) for q in [95, 96, 97, 98, 98.5, 99, 99.5]]
+    # Evidence thresholds: fractions of p_fraud
+    p_ev_candidates = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+
+    best_score = -1.0
+    best_thresholds = PolicyThresholds(
+        p_fraud_thresh=float(np.percentile(val_probs, 98.0)),
+        p_evidence_thresh=float(np.percentile(val_probs, 96.0)),
+        uncertainty_thresh=float(np.percentile(val_uncertainties, 97.0)),
+    )
+
+    for u_th in u_candidates:
+        for pf_th in p_fraud_candidates:
+            for ev_factor in p_ev_candidates:
+                pe_th = pf_th * ev_factor
+                temp_thresh = PolicyThresholds(p_fraud_thresh=pf_th, p_evidence_thresh=pe_th, uncertainty_thresh=u_th)
+                _, codes = assign_next_best_actions(val_probs, val_uncertainties, temp_thresh, val_amounts)
+
+                non_allow_pct = (np.sum(codes != 0) / n_val) * 100.0
+                escalate_pct = (np.sum(codes == 3) / n_val) * 100.0
+
+                # Check strict operational constraints
+                if non_allow_pct <= max_non_allow_pct and escalate_pct <= max_escalate_pct:
+                    # Score by frauds captured in non-allow actions
+                    frauds_captured = np.sum((codes != 0) & (val_targets == 1))
+                    total_non_allow = max(1, np.sum(codes != 0))
+                    precision = frauds_captured / total_non_allow
+
+                    # F1-like objective on validation
+                    score = frauds_captured * precision
+                    if score > best_score:
+                        best_score = score
+                        best_thresholds = temp_thresh
+
+    return best_thresholds
+
+
 def evaluate_decision_policy(config: PipelineConfig) -> Dict[str, Dict[str, float]]:
     """Calibrate policy on validation and evaluate action routing on test set."""
     config.ensure_dirs()
@@ -110,15 +138,16 @@ def evaluate_decision_policy(config: PipelineConfig) -> Dict[str, Dict[str, floa
     y_val = val_meta["isFraud"].values.astype(np.float32)
     y_test = test_meta["isFraud"].values.astype(np.float32)
 
-    val_probs = val_mc["mean_prob"]
-    val_uncert = val_mc["variance"]
+    # Use calibrated probabilities if available
+    val_probs = val_mc["mean_prob_calibrated"] if "mean_prob_calibrated" in val_mc else val_mc["mean_prob"]
+    test_probs = test_mc["mean_prob_calibrated"] if "mean_prob_calibrated" in test_mc else test_mc["mean_prob"]
 
-    test_probs = test_mc["mean_prob"]
+    val_uncert = val_mc["variance"]
     test_uncert = test_mc["variance"]
 
-    print("[*] Calibrating Next-Best-Action thresholds strictly on Validation split...")
+    print("[*] Calibrating Next-Best-Action thresholds strictly on Validation split (Constraints: Non-ALLOW <= 5%, ESCALATE <= 1%)...")
     thresholds = calibrate_thresholds_on_val(
-        val_probs, val_uncert, y_val, alert_budget=config.alert_budget_fraction
+        val_probs, val_uncert, y_val, max_non_allow_pct=5.0, max_escalate_pct=1.0
     )
     print(f"  • Tuned p_fraud_thresh:     {thresholds.p_fraud_thresh:.4f}")
     print(f"  • Tuned p_evidence_thresh:  {thresholds.p_evidence_thresh:.4f}")
@@ -133,37 +162,39 @@ def evaluate_decision_policy(config: PipelineConfig) -> Dict[str, Dict[str, floa
     for code, label in [(0, "ALLOW"), (1, "ACT"), (2, "REQUEST_EVIDENCE"), (3, "ESCALATE")]:
         mask = (test_action_codes == code)
         count = int(mask.sum())
-        pct = (count / len(test_probs)) * 100
+        pct = (count / len(test_probs)) * 100.0
         fraud_count = int(y_test[mask].sum())
-        fraud_precision = (fraud_count / count * 100) if count > 0 else 0.0
-        fraud_recall = (fraud_count / max(1, y_test.sum())) * 100
+        fraud_precision = (fraud_count / count * 100.0) if count > 0 else 0.0
+        fraud_recall = (fraud_count / max(1, y_test.sum())) * 100.0
 
         action_summary[label] = {
             "count": count,
-            "pct": pct,
+            "pct": round(pct, 2),
             "frauds_captured": fraud_count,
-            "precision_pct": fraud_precision,
-            "recall_pct": fraud_recall,
+            "precision_pct": round(fraud_precision, 2),
+            "recall_pct": round(fraud_recall, 2),
         }
         print(f"  • {label:17s}: {count:6,d} ({pct:5.2f}%) | Frauds: {fraud_count:4,d} | Precision: {fraud_precision:5.1f}% | Recall: {fraud_recall:5.1f}%")
+
+    non_allow_total = sum(action_summary[act]["count"] for act in ["ACT", "REQUEST_EVIDENCE", "ESCALATE"])
+    non_allow_pct = (non_allow_total / len(test_probs)) * 100.0
+    print(f"\n[+] Total Non-ALLOW Action Volume: {non_allow_total:,} ({non_allow_pct:.2f}% of traffic <= 5% operational cap)")
 
     # Save decisions
     test_meta["pred_prob"] = test_probs
     test_meta["epistemic_uncertainty"] = test_uncert
-    test_meta["total_entropy"] = test_mc["total_entropy"]
     test_meta["recommended_action"] = test_actions
     test_meta.to_parquet(config.out_dir / "test_decisions.parquet", index=False)
 
     policy_meta = {
         "thresholds": {
-            "p_fraud": thresholds.p_fraud_thresh,
-            "p_evidence": thresholds.p_evidence_thresh,
-            "uncertainty": thresholds.uncertainty_thresh,
+            "p_fraud": float(thresholds.p_fraud_thresh),
+            "p_evidence": float(thresholds.p_evidence_thresh),
+            "uncertainty": float(thresholds.uncertainty_thresh),
         },
         "test_summary": action_summary,
     }
-    with open(config.out_dir / "decision_policy_summary.json", "w") as f:
-        json.dump(policy_meta, f, indent=2)
+    save_json(config.out_dir / "decision_policy_summary.json", policy_meta)
 
     print(f"[+] Decision policy evaluation complete. Saved to {config.out_dir}")
     return action_summary

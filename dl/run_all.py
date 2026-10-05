@@ -25,11 +25,13 @@ import pandas as pd
 
 from dl.src.autoencoder import train_autoencoder
 from dl.src.baselines import run_baselines
+from dl.src.calibration import calibrate_predictions
 from dl.src.config import (
     PipelineConfig,
     get_default_checkpoint_dir,
     get_default_data_dir,
     get_default_output_dir,
+    save_json,
     set_seeds,
 )
 from dl.src.data import prepare_data
@@ -51,35 +53,39 @@ def run_single_seed_pipeline(config: PipelineConfig) -> pd.DataFrame:
     config.ensure_dirs()
 
     # Stage 1: Data Preparation & Temporal Split
-    print("\n[STAGE 1/8] Data Loading & Temporal Splitting...")
+    print("\n[STAGE 1/9] Data Loading & Temporal Splitting...")
     prepare_data(config)
 
     # Stage 2: Graph Construction
-    print("\n[STAGE 2/8] Graph Construction & Hub Degree Capping...")
+    print("\n[STAGE 2/9] Graph Construction & Hub Degree Capping...")
     build_graph(config)
 
     # Stage 3: Tabular Baselines
-    print("\n[STAGE 3/8] Tabular Baselines (LightGBM, XGBoost, Tabular MLP)...")
+    print("\n[STAGE 3/9] Tabular Baselines (LightGBM, XGBoost, Tabular MLP)...")
     run_baselines(config)
 
     # Stage 4: Autoencoder
-    print("\n[STAGE 4/8] Autoencoder Anomaly Representation Learning...")
+    print("\n[STAGE 4/9] Autoencoder Anomaly Representation Learning...")
     train_autoencoder(config)
 
     # Stage 5: GNN (GraphSAGE) Training
-    print("\n[STAGE 5/8] Graph Neural Network (GraphSAGE) Training & Ablations...")
+    print("\n[STAGE 5/9] Graph Neural Network (GraphSAGE) Training & Ablations...")
     run_gnn_pipeline(config)
 
     # Stage 6: Monte Carlo Dropout
-    print("\n[STAGE 6/8] Monte Carlo Dropout Inference (T=30 Stochastic Passes)...")
+    print("\n[STAGE 6/9] Monte Carlo Dropout Inference (T=30 Stochastic Passes)...")
     compute_mc_uncertainties(config)
 
-    # Stage 7: Next-Best-Action Decision Policy
-    print("\n[STAGE 7/8] Uncertainty-Driven Next-Best-Action Policy Evaluation...")
+    # Stage 7: Post-Hoc Probability Calibration (Validation-Fitted)
+    print("\n[STAGE 7/9] Post-Hoc Probability Calibration (ECE Reduction)...")
+    calibrate_predictions(config)
+
+    # Stage 8: Next-Best-Action Decision Policy
+    print("\n[STAGE 8/9] Uncertainty-Driven Next-Best-Action Policy Evaluation (Constraints Enforced)...")
     evaluate_decision_policy(config)
 
-    # Stage 8: Evaluation & Plots
-    print("\n[STAGE 8/8] Evaluation, Calibration, and Visualization Artifacts...")
+    # Stage 9: Evaluation & Plots
+    print("\n[STAGE 9/9] Comprehensive Evaluation, Calibration Reliability Diagrams, and Visualization Artifacts...")
     df_metrics = generate_evaluation_artifacts(config)
 
     # Sanity Check: Test ROC-AUC Leakage Guardrail

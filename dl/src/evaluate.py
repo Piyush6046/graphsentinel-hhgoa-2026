@@ -2,9 +2,9 @@
 
 Implements:
 1. Primary metrics: PR-AUC, ROC-AUC, Recall @ Top 0.5% / 1% Alert Budget, Recall @ 90% Precision.
-2. Full Comparison Table: LightGBM, XGBoost, MLP, Autoencoder, GNN, GNN+AE, LightGBM+Graph.
+2. Full Comparison Table: LightGBM, XGBoost, MLP, Autoencoder, GNN, GNN+AE, LightGBM+Graph, MC-Dropout GNN.
 3. Graph & Autoencoder Ablations.
-4. Calibration Analysis: Expected Calibration Error (ECE) & Reliability Diagrams.
+4. Calibration Analysis: Expected Calibration Error (ECE) & Reliability Diagrams (Pre vs Post Calibration).
 5. Risk-Coverage / Abstention Curves & Uncertainty-Error Correlation.
 6. Ring-Level Detection Metrics for Shared-Device / Multi-Card Syndicates.
 7. Multi-Seed Reporting (Mean +/- Std).
@@ -14,7 +14,6 @@ Implements:
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -30,7 +29,7 @@ from sklearn.metrics import (
     roc_curve,
 )
 
-from dl.src.config import PipelineConfig, get_default_output_dir, set_seeds
+from dl.src.config import PipelineConfig, get_default_output_dir, save_json, set_seeds
 
 
 def validate_binary_targets(y_true: np.ndarray, context: str = "evaluation") -> None:
@@ -161,8 +160,8 @@ def generate_evaluation_artifacts(config: PipelineConfig) -> pd.DataFrame:
 
     # 2. Collect model predictions
     models = {
-        "LightGBM": config.out_dir / "preds_test_lgb.npy",
-        "XGBoost": config.out_dir / "preds_test_xgb.npy",
+        "LightGBM (Tabular)": config.out_dir / "preds_test_lgb.npy",
+        "XGBoost (Tabular)": config.out_dir / "preds_test_xgb.npy",
         "Tabular MLP": config.out_dir / "preds_test_mlp.npy",
         "Autoencoder (Score)": config.out_dir / "preds_test_ae.npy",
         "LightGBM + Graph": config.out_dir / "preds_test_lgb_graph.npy",
@@ -174,10 +173,12 @@ def generate_evaluation_artifacts(config: PipelineConfig) -> pd.DataFrame:
     mc_path = config.out_dir / "mc_dropout_test.npz"
     if mc_path.exists():
         mc_data = np.load(mc_path)
-        mc_probs = mc_data["mean_prob"]
+        mc_raw_probs = mc_data["mean_prob"]
+        mc_cal_probs = mc_data["mean_prob_calibrated"] if "mean_prob_calibrated" in mc_data else mc_raw_probs
         mc_uncert = mc_data["variance"]
     else:
-        mc_probs = None
+        mc_raw_probs = None
+        mc_cal_probs = None
         mc_uncert = None
 
     metrics_list = []
@@ -205,30 +206,48 @@ def generate_evaluation_artifacts(config: PipelineConfig) -> pd.DataFrame:
                 "ECE": round(ece, 4),
             })
 
-    # Add MC-Dropout GNN model entry
-    if mc_probs is not None:
-        pr_auc = float(average_precision_score(y_test, mc_probs))
-        roc_auc = float(roc_auc_score(y_test, mc_probs))
-        rec_05 = compute_recall_at_alert_budget(y_test, mc_probs, budget_fraction=0.005)
-        rec_10 = compute_recall_at_alert_budget(y_test, mc_probs, budget_fraction=0.010)
-        rec_p90 = compute_recall_at_precision(y_test, mc_probs, target_precision=0.90)
-        ece, _, _, _ = compute_expected_calibration_error(y_test, mc_probs)
+    # Add MC-Dropout GNN model entries (Raw and Calibrated)
+    if mc_raw_probs is not None:
+        pr_raw = float(average_precision_score(y_test, mc_raw_probs))
+        roc_raw = float(roc_auc_score(y_test, mc_raw_probs))
+        rec_05_raw = compute_recall_at_alert_budget(y_test, mc_raw_probs, budget_fraction=0.005)
+        rec_10_raw = compute_recall_at_alert_budget(y_test, mc_raw_probs, budget_fraction=0.010)
+        rec_p90_raw = compute_recall_at_precision(y_test, mc_raw_probs, target_precision=0.90)
+        ece_raw, _, _, _ = compute_expected_calibration_error(y_test, mc_raw_probs)
 
         metrics_list.append({
-            "Model": "MC-Dropout GNN (Mean)",
-            "PR-AUC": round(pr_auc, 4),
-            "ROC-AUC": round(roc_auc, 4),
-            "Recall @ Top 0.5%": round(rec_05, 4),
-            "Recall @ Top 1.0%": round(rec_10, 4),
-            "Recall @ 90% Prec": round(rec_p90, 4),
-            "ECE": round(ece, 4),
+            "Model": "MC-Dropout GNN (Raw)",
+            "PR-AUC": round(pr_raw, 4),
+            "ROC-AUC": round(roc_raw, 4),
+            "Recall @ Top 0.5%": round(rec_05_raw, 4),
+            "Recall @ Top 1.0%": round(rec_10_raw, 4),
+            "Recall @ 90% Prec": round(rec_p90_raw, 4),
+            "ECE": round(ece_raw, 4),
         })
-        pred_dict["MC-Dropout GNN"] = mc_probs
+        pred_dict["MC-Dropout GNN (Raw)"] = mc_raw_probs
+
+    if mc_cal_probs is not None:
+        pr_cal = float(average_precision_score(y_test, mc_cal_probs))
+        roc_cal = float(roc_auc_score(y_test, mc_cal_probs))
+        rec_05_cal = compute_recall_at_alert_budget(y_test, mc_cal_probs, budget_fraction=0.005)
+        rec_10_cal = compute_recall_at_alert_budget(y_test, mc_cal_probs, budget_fraction=0.010)
+        rec_p90_cal = compute_recall_at_precision(y_test, mc_cal_probs, target_precision=0.90)
+        ece_cal, _, _, _ = compute_expected_calibration_error(y_test, mc_cal_probs)
+
+        metrics_list.append({
+            "Model": "MC-Dropout GNN (Calibrated)",
+            "PR-AUC": round(pr_cal, 4),
+            "ROC-AUC": round(roc_cal, 4),
+            "Recall @ Top 0.5%": round(rec_05_cal, 4),
+            "Recall @ Top 1.0%": round(rec_10_cal, 4),
+            "Recall @ 90% Prec": round(rec_p90_cal, 4),
+            "ECE": round(ece_cal, 4),
+        })
+        pred_dict["MC-Dropout GNN (Calibrated)"] = mc_cal_probs
 
     df_metrics = pd.DataFrame(metrics_list)
     df_metrics.to_csv(config.out_dir / "metrics_summary.csv", index=False)
-    with open(config.out_dir / "metrics_summary.json", "w") as f:
-        json.dump(df_metrics.to_dict(orient="records"), f, indent=2)
+    save_json(config.out_dir / "metrics_summary.json", df_metrics.to_dict(orient="records"))
 
     # 3. Print Summary Table
     print("\n" + "=" * 90)
@@ -238,76 +257,87 @@ def generate_evaluation_artifacts(config: PipelineConfig) -> pd.DataFrame:
     print("=" * 90)
 
     # 4. Ring-Level Metrics
-    best_pred_for_rings = mc_probs if mc_probs is not None else pred_dict.get("GNN + AE (Full)", list(pred_dict.values())[0])
+    best_pred_for_rings = mc_cal_probs if mc_cal_probs is not None else pred_dict.get("GNN + AE (Full)", list(pred_dict.values())[0])
     ring_metrics = evaluate_ring_level_metrics(test_meta, best_pred_for_rings)
     print(f"\n[*] Ring-Level Fraud Detection Metrics (Shared-Device Clusters):")
     print(f"  • Cluster Size: {ring_metrics['ring_size']} txns | Confirmed Frauds: {ring_metrics['ring_frauds']}")
     print(f"  • Ring PR-AUC:  {ring_metrics['ring_pr_auc']:.4f} | Ring ROC-AUC: {ring_metrics['ring_roc_auc']:.4f}")
-    with open(config.out_dir / "ring_metrics.json", "w") as f:
-        json.dump(ring_metrics, f, indent=2)
+    save_json(config.out_dir / "ring_metrics.json", ring_metrics)
 
-    # 5. Generate Figures (PNG)
+    # 5. Risk-Coverage Table
+    if mc_cal_probs is not None and mc_uncert is not None:
+        cov_steps = [1.0, 0.95, 0.90, 0.80, 0.70, 0.50]
+        coverages, errors = compute_risk_coverage_curve(y_test, mc_cal_probs, mc_uncert, coverages=cov_steps)
+        print("\n[*] Risk-Coverage / Selective Classification Analysis (Abstention on Uncertainty):")
+        for cov, err in zip(coverages, errors):
+            print(f"  • Coverage: {cov*100:5.1f}% of most confident transactions -> Error Rate on Retained Set: {err*100:5.2f}%")
+
+    # 6. Generate Figures (PNG)
     plt.style.use("default")
     fig, axes = plt.subplots(2, 2, figsize=(16, 12))
 
     # Plot 1: Precision-Recall Curves
     ax1 = axes[0, 0]
     for name, preds in pred_dict.items():
-        if name in ["LightGBM", "Tabular MLP", "GraphSAGE (GNN)", "GNN + AE (Full)", "MC-Dropout GNN"]:
+        if name in ["LightGBM (Tabular)", "LightGBM + Graph", "Tabular MLP", "GraphSAGE (GNN)", "GNN + AE (Full)", "MC-Dropout GNN (Calibrated)"]:
             p, r, _ = precision_recall_curve(y_test, preds)
             score = average_precision_score(y_test, preds)
-            ax1.plot(r, p, label=f"{name} (PR-AUC = {score:.3f})", lw=2)
+            ax1.plot(r, p, label=f"{name} (PR={score:.3f})", lw=2)
     ax1.set_title("Precision-Recall Curves (Temporal Test)", fontsize=13, fontweight="bold")
     ax1.set_xlabel("Recall")
     ax1.set_ylabel("Precision")
     ax1.grid(True, linestyle="--", alpha=0.6)
-    ax1.legend(loc="lower left", fontsize=10)
+    ax1.legend(loc="lower left", fontsize=9)
 
     # Plot 2: ROC Curves
     ax2 = axes[0, 1]
     for name, preds in pred_dict.items():
-        if name in ["LightGBM", "Tabular MLP", "GraphSAGE (GNN)", "GNN + AE (Full)", "MC-Dropout GNN"]:
+        if name in ["LightGBM (Tabular)", "LightGBM + Graph", "Tabular MLP", "GraphSAGE (GNN)", "GNN + AE (Full)", "MC-Dropout GNN (Calibrated)"]:
             fpr, tpr, _ = roc_curve(y_test, preds)
             score = roc_auc_score(y_test, preds)
-            ax2.plot(fpr, tpr, label=f"{name} (ROC-AUC = {score:.3f})", lw=2)
+            ax2.plot(fpr, tpr, label=f"{name} (ROC={score:.3f})", lw=2)
     ax2.plot([0, 1], [0, 1], "k--", label="Random Chance (0.500)")
     ax2.set_title("ROC Curves (Temporal Test)", fontsize=13, fontweight="bold")
     ax2.set_xlabel("False Positive Rate")
     ax2.set_ylabel("True Positive Rate")
     ax2.grid(True, linestyle="--", alpha=0.6)
-    ax2.legend(loc="lower right", fontsize=10)
+    ax2.legend(loc="lower right", fontsize=9)
 
-    # Plot 3: Calibration Diagram (MLP vs MC-Dropout GNN)
+    # Plot 3: Reliability Diagram (Pre vs Post Calibration)
     ax3 = axes[1, 0]
     mlp_preds = pred_dict.get("Tabular MLP")
     if mlp_preds is not None:
         ece_mlp, conf_mlp, acc_mlp, _ = compute_expected_calibration_error(y_test, mlp_preds)
-        ax3.plot(conf_mlp, acc_mlp, "s--", label=f"Tabular MLP (ECE = {ece_mlp:.3f})", color="tab:orange")
-    if mc_probs is not None:
-        ece_mc, conf_mc, acc_mc, _ = compute_expected_calibration_error(y_test, mc_probs)
-        ax3.plot(conf_mc, acc_mc, "o-", label=f"MC-Dropout GNN (ECE = {ece_mc:.3f})", color="tab:blue", lw=2)
+        ax3.plot(conf_mlp, acc_mlp, "s--", label=f"Tabular MLP (ECE={ece_mlp:.3f})", color="tab:orange", alpha=0.8)
+    if mc_raw_probs is not None:
+        ece_raw, conf_raw, acc_raw, _ = compute_expected_calibration_error(y_test, mc_raw_probs)
+        ax3.plot(conf_raw, acc_raw, "^:", label=f"MC-Dropout GNN Raw (ECE={ece_raw:.3f})", color="tab:purple", alpha=0.8)
+    if mc_cal_probs is not None:
+        ece_cal, conf_cal, acc_cal, _ = compute_expected_calibration_error(y_test, mc_cal_probs)
+        ax3.plot(conf_cal, acc_cal, "o-", label=f"MC-Dropout GNN Calibrated (ECE={ece_cal:.3f})", color="tab:blue", lw=2.5)
     ax3.plot([0, 1], [0, 1], "k:", label="Perfect Calibration")
-    ax3.set_title("Reliability Diagram / Calibration", fontsize=13, fontweight="bold")
+    ax3.set_title("Reliability Diagram / Calibration (ECE)", fontsize=13, fontweight="bold")
     ax3.set_xlabel("Mean Predicted Confidence")
-    ax3.set_ylabel("Empirical Accuracy / True Positive Rate")
+    ax3.set_ylabel("Empirical True Positive Rate")
     ax3.grid(True, linestyle="--", alpha=0.6)
-    ax3.legend(loc="upper left", fontsize=10)
+    ax3.legend(loc="upper left", fontsize=9)
 
     # Plot 4: Risk-Coverage / Abstention Curve
     ax4 = axes[1, 1]
-    if mc_probs is not None and mc_uncert is not None:
-        coverages, errors = compute_risk_coverage_curve(y_test, mc_probs, mc_uncert)
-        ax4.plot([c * 100 for c in coverages], [e * 100 for e in errors], "o-", color="tab:red", lw=2)
+    if mc_cal_probs is not None and mc_uncert is not None:
+        cov_all, err_all = compute_risk_coverage_curve(y_test, mc_cal_probs, mc_uncert)
+        ax4.plot([c * 100 for c in cov_all], [e * 100 for e in err_all], "o-", color="tab:red", lw=2)
         ax4.set_title("Risk-Coverage Abstention Analysis", fontsize=13, fontweight="bold")
         ax4.set_xlabel("Coverage (% Most Confident Transactions Retained)")
         ax4.set_ylabel("Error Rate on Retained Set (%)")
         ax4.grid(True, linestyle="--", alpha=0.6)
 
     plt.tight_layout()
-    plt.savefig(config.out_dir / "evaluation_curves.png", dpi=300)
+    plot_path = config.out_dir / "evaluation_curves.png"
+    plt.savefig(plot_path, dpi=300)
     plt.close()
 
-    print(f"[+] Generated comprehensive plots at {config.out_dir / 'evaluation_curves.png'}")
+    print(f"\n[+] Generated comprehensive plots at {plot_path}")
     return df_metrics
 
 

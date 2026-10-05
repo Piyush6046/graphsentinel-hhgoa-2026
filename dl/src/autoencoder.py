@@ -18,7 +18,7 @@ import torch.nn as nn
 from sklearn.metrics import average_precision_score, roc_auc_score
 from torch.utils.data import DataLoader, TensorDataset
 
-from dl.src.config import PipelineConfig, get_default_checkpoint_dir, get_default_output_dir, set_seeds
+from dl.src.config import PipelineConfig, get_default_checkpoint_dir, get_default_output_dir, save_json, set_seeds
 
 
 class TabularAutoencoder(nn.Module):
@@ -166,8 +166,7 @@ def train_autoencoder(config: PipelineConfig) -> Tuple[np.ndarray, np.ndarray, n
         test_latents=test_latents,
     )
 
-    with open(config.out_dir / "autoencoder_results.json", "w") as f:
-        json.dump({"Autoencoder": {"PR-AUC": test_pr_auc, "ROC-AUC": test_roc_auc}}, f, indent=2)
+    save_json(config.out_dir / "autoencoder_results.json", {"Autoencoder": {"PR-AUC": test_pr_auc, "ROC-AUC": test_roc_auc}})
 
     print(f"[+] Autoencoder training complete. Checkpoint saved to {config.checkpoint_dir}")
     return train_errors, val_errors, test_errors, model
