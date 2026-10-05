@@ -102,3 +102,51 @@ def test_mc_dropout_uncertainty_behavior():
 
     assert np.all(variance >= 0.0)
     assert np.mean(variance) > 0.0, "Expected positive epistemic variance under stochastic dropout!"
+
+
+def test_sampler_preserves_natural_fraud_rate_and_classes():
+    """Verify that subsampling preserves natural fraud rate within 1 percentage point and both classes exist in all splits."""
+    np.random.seed(42)
+    n_full = 100_000
+    n_sample = 20_000
+
+    # Create synthetic dataset with natural 3.5% fraud rate
+    full_fraud_rate = 0.035
+    is_fraud_full = (np.random.rand(n_full) < full_fraud_rate).astype(int)
+    full_df = pd.DataFrame({
+        "TransactionID": [f"TX_{i}" for i in range(n_full)],
+        "TransactionDT": np.arange(n_full),
+        "isFraud": is_fraud_full,
+    })
+
+    # Uniform random sample from the full dataset (fixed seed), then sort strictly by TransactionDT
+    sampled_df = full_df.sample(n=n_sample, random_state=42).sort_values("TransactionDT").reset_index(drop=True)
+    sample_fraud_rate = sampled_df["isFraud"].mean()
+
+    # 1. Fraud rate in sample must be within 1 percentage point of full rate
+    assert abs(sample_fraud_rate - full_fraud_rate) < 0.01, (
+        f"Sample fraud rate {sample_fraud_rate:.4f} deviated by more than 1% from full rate {full_fraud_rate:.4f}"
+    )
+
+    # 2. Both classes must exist in every temporal split and fraud rate must be between 1% and 10%
+    train_df, val_df, test_df = perform_temporal_split(sampled_df, train_ratio=0.70, val_ratio=0.15)
+    for name, split in [("Train", train_df), ("Val", val_df), ("Test", test_df)]:
+        n_fraud = split["isFraud"].sum()
+        n_legit = len(split) - n_fraud
+        rate = split["isFraud"].mean()
+        assert n_fraud > 0, f"Split {name} has zero frauds!"
+        assert n_legit > 0, f"Split {name} has zero legitimate transactions!"
+        assert 0.01 <= rate <= 0.10, f"Split {name} fraud rate {rate*100:.2f}% outside [1%, 10%]"
+
+
+def test_temporal_split_raises_on_single_class_or_anomaly():
+    """Verify that perform_temporal_split raises clear ValueError if a split is single-class."""
+    # 100% fraud dataset
+    all_fraud_df = pd.DataFrame({
+        "TransactionID": [f"TX_{i}" for i in range(100)],
+        "TransactionDT": range(100),
+        "isFraud": [1] * 100,
+    })
+    with pytest.raises(ValueError, match="Single-class error"):
+        perform_temporal_split(all_fraud_df)
+

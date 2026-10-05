@@ -112,15 +112,9 @@ def load_raw_ieee_data(data_dir: Path, sample_size: int | None = None) -> pd.Dat
     merged_df = merged_df.sort_values("TransactionDT").reset_index(drop=True)
 
     if sample_size is not None and sample_size < len(merged_df):
-        print(f"[*] Subsampling to {sample_size:,} time-ordered records (preserving all fraud cases)...")
-        # Keep all fraud records in the temporal window, and sample legitimate rows to reach sample_size
-        fraud_mask = merged_df["isFraud"] == 1
-        legit_mask = ~fraud_mask
-        n_fraud = fraud_mask.sum()
-        n_legit_needed = max(0, sample_size - n_fraud)
-
-        legit_sampled = merged_df[legit_mask].sample(n=min(n_legit_needed, legit_mask.sum()), random_state=42)
-        merged_df = pd.concat([merged_df[fraud_mask], legit_sampled]).sort_values("TransactionDT").reset_index(drop=True)
+        print(f"[*] Subsampling {sample_size:,} rows uniformly at random (preserving natural ~3.5% fraud rate)...")
+        # Uniform random sample from full dataset (fixed seed), then sort strictly by TransactionDT
+        merged_df = merged_df.sample(n=sample_size, random_state=42).sort_values("TransactionDT").reset_index(drop=True)
 
     print(f"[*] Constructing composite card and device entity keys...")
     merged_df = construct_composite_keys(merged_df)
@@ -152,9 +146,27 @@ def perform_temporal_split(
     print_split_stats("Val", val_df)
     print_split_stats("Test", test_df)
 
-    # Sanity check: Ensure zero temporal overlap
+    # Sanity checks: Ensure zero temporal overlap
     assert train_df["TransactionDT"].max() <= val_df["TransactionDT"].min(), "Temporal leakage between Train and Val!"
     assert val_df["TransactionDT"].max() <= test_df["TransactionDT"].min(), "Temporal leakage between Val and Test!"
+
+    # Strict class balance assertions: Every split must contain both classes and natural fraud rate (1% to 10%)
+    for name, split_df in [("Train", train_df), ("Val", val_df), ("Test", test_df)]:
+        n_rows = len(split_df)
+        n_fraud = int(split_df["isFraud"].sum())
+        n_legit = n_rows - n_fraud
+        rate = (n_fraud / n_rows) if n_rows > 0 else 0.0
+
+        if n_fraud == 0 or n_legit == 0:
+            raise ValueError(
+                f"Single-class error in {name} split: contains {n_fraud} fraud and {n_legit} legitimate transactions. "
+                f"Both classes must be present in every split."
+            )
+        if not (0.01 <= rate <= 0.10):
+            raise ValueError(
+                f"Fraud rate anomaly in {name} split: {name} has fraud rate {rate*100:.2f}% ({n_fraud}/{n_rows} frauds). "
+                f"Expected natural fraud rate between 1.0% and 10.0%."
+            )
 
     return train_df, val_df, test_df
 

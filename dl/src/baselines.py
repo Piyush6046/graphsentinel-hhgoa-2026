@@ -44,6 +44,16 @@ class TabularMLP(nn.Module):
         return self.network(x).squeeze(-1)
 
 
+def validate_binary_targets(y: np.ndarray, split_name: str) -> None:
+    """Ensure target array contains both positive and negative classes."""
+    unique = np.unique(y)
+    if len(unique) < 2:
+        raise ValueError(
+            f"Invalid target distribution in {split_name}: found only class(es) {unique.tolist()}. "
+            f"Both positive (fraud=1) and negative (legitimate=0) classes are strictly required."
+        )
+
+
 def train_lightgbm_baseline(
     X_train: np.ndarray, y_train: np.ndarray,
     X_val: np.ndarray, y_val: np.ndarray,
@@ -52,6 +62,10 @@ def train_lightgbm_baseline(
     feature_prefix: str = "lgb",
 ) -> Tuple[np.ndarray, np.ndarray, float, float]:
     """Train LightGBM gradient-boosted tree baseline."""
+    validate_binary_targets(y_train, "LightGBM Train")
+    validate_binary_targets(y_val, "LightGBM Val")
+    validate_binary_targets(y_test, "LightGBM Test")
+
     print(f"[*] Training LightGBM baseline ({feature_prefix})...")
 
     # Pos weight to balance fraud classes
@@ -103,6 +117,10 @@ def train_xgboost_baseline(
     config: PipelineConfig,
 ) -> Tuple[np.ndarray, np.ndarray, float, float]:
     """Train XGBoost gradient-boosted tree baseline."""
+    validate_binary_targets(y_train, "XGBoost Train")
+    validate_binary_targets(y_val, "XGBoost Val")
+    validate_binary_targets(y_test, "XGBoost Test")
+
     print("[*] Training XGBoost baseline...")
     n_neg = (y_train == 0).sum()
     n_pos = (y_train == 1).sum()
@@ -143,6 +161,10 @@ def train_mlp_baseline(
     config: PipelineConfig,
 ) -> Tuple[np.ndarray, np.ndarray, float, float, TabularMLP]:
     """Train PyTorch Tabular MLP baseline."""
+    validate_binary_targets(y_train, "Tabular MLP Train")
+    validate_binary_targets(y_val, "Tabular MLP Val")
+    validate_binary_targets(y_test, "Tabular MLP Test")
+
     print("[*] Training Tabular MLP baseline...")
     device = torch.device(config.device)
 

@@ -33,8 +33,19 @@ from sklearn.metrics import (
 from dl.src.config import PipelineConfig, get_default_output_dir, set_seeds
 
 
+def validate_binary_targets(y_true: np.ndarray, context: str = "evaluation") -> None:
+    """Ensure ground truth target array contains both positive and negative classes."""
+    unique = np.unique(y_true)
+    if len(unique) < 2:
+        raise ValueError(
+            f"Invalid target distribution in {context}: found only class(es) {unique.tolist()}. "
+            f"Both positive (fraud=1) and negative (legitimate=0) classes are required for evaluation."
+        )
+
+
 def compute_recall_at_alert_budget(y_true: np.ndarray, y_score: np.ndarray, budget_fraction: float) -> float:
     """Compute recall when investigating only the top budget_fraction of alerts."""
+    validate_binary_targets(y_true, "compute_recall_at_alert_budget")
     k = max(1, int(len(y_score) * budget_fraction))
     top_indices = np.argsort(y_score)[::-1][:k]
     fraud_detected = y_true[top_indices].sum()
@@ -44,6 +55,7 @@ def compute_recall_at_alert_budget(y_true: np.ndarray, y_score: np.ndarray, budg
 
 def compute_recall_at_precision(y_true: np.ndarray, y_score: np.ndarray, target_precision: float = 0.90) -> float:
     """Compute maximum recall achieved at or above the target precision threshold."""
+    validate_binary_targets(y_true, "compute_recall_at_precision")
     precisions, recalls, _ = precision_recall_curve(y_true, y_score)
     valid_recalls = recalls[precisions >= target_precision]
     return float(np.max(valid_recalls)) if len(valid_recalls) > 0 else 0.0
@@ -53,6 +65,7 @@ def compute_expected_calibration_error(
     y_true: np.ndarray, y_prob: np.ndarray, n_bins: int = 15
 ) -> Tuple[float, np.ndarray, np.ndarray, np.ndarray]:
     """Compute Expected Calibration Error (ECE) and bin statistics."""
+    validate_binary_targets(y_true, "compute_expected_calibration_error")
     bin_boundaries = np.linspace(0, 1, n_bins + 1)
     bin_lowers = bin_boundaries[:-1]
     bin_uppers = bin_boundaries[1:]
@@ -144,6 +157,7 @@ def generate_evaluation_artifacts(config: PipelineConfig) -> pd.DataFrame:
     # 1. Load test metadata and ground truth labels
     test_meta = pd.read_parquet(config.out_dir / "test_meta.parquet")
     y_test = test_meta["isFraud"].values.astype(np.float32)
+    validate_binary_targets(y_test, "Test Set Evaluation")
 
     # 2. Collect model predictions
     models = {

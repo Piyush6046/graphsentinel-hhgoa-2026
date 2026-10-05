@@ -30,17 +30,17 @@ print(f"Dataset directory contents: {os.listdir(data_path)}")
 
 ---
 
-## Cell 2: Fast Smoke Test (20,000 Transactions Subsample)
+## Cell 2: Fast Smoke Test (100,000 Transactions Subsample)
 
-*Run this cell first to verify the complete 8-stage pipeline executes without errors in ~2 minutes.*
+*Run this cell first to verify the complete 8-stage pipeline executes without errors in ~2 minutes (~3,500 frauds at natural 3.5% prevalence).*
 
 ```python
-# Cell 2: Fast Smoke-Test (20,000 samples)
+# Cell 2: Fast Smoke-Test (100,000 samples, ~3,500 frauds)
 !python -m dl.run_all \
     --data_dir /kaggle/input/ieee-fraud-detection \
     --out_dir /kaggle/working/dl/results/smoke_test \
     --ckpt_dir /kaggle/working/dl/checkpoints/smoke_test \
-    --sample 20000 \
+    --sample 100000 \
     --seeds 42 \
     --mc_samples 15
 ```
