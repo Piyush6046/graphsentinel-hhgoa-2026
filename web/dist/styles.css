@@ -597,14 +597,15 @@ body {
 .case-item {
   display: grid;
   grid-template-columns: 8px 1fr auto;
-  gap: 0.95rem;
+  gap: 0.85rem;
   align-items: center;
-  padding: 1rem 1.35rem;
+  padding: 0.85rem 1.15rem;
   border-bottom: 1px solid var(--border-subtle);
   cursor: pointer;
   transition: all 0.15s ease;
   background: transparent;
   user-select: none;
+  min-width: 0;
 }
 .case-item:hover {
   background: var(--bg-card-hover);
@@ -624,6 +625,7 @@ body {
   border-radius: 50%;
   background: var(--emerald-400);
   box-shadow: 0 0 8px var(--emerald-400);
+  flex-shrink: 0;
 }
 .case-status-pip.fraud {
   background: var(--rose-400);
@@ -632,6 +634,7 @@ body {
 
 .case-info {
   min-width: 0;
+  overflow: hidden;
 }
 
 .case-row-top {
@@ -639,6 +642,7 @@ body {
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 0.25rem;
+  min-width: 0;
 }
 
 .case-id-text {
@@ -646,6 +650,8 @@ body {
   font-weight: 800;
   font-size: 0.85rem;
   color: var(--text-primary);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .case-pattern-tag {
@@ -661,7 +667,12 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 150px;
+  max-width: 140px;
+}
+.case-pattern-tag.fraud-tag {
+  border-color: rgba(255, 51, 102, 0.35);
+  color: var(--rose-400);
+  background: rgba(255, 51, 102, 0.1);
 }
 
 .case-row-bottom {
@@ -678,6 +689,10 @@ body {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  gap: 0.25rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
   gap: 0.2rem;
 }
 
@@ -866,6 +881,8 @@ body {
   gap: 0.5rem;
   border-bottom: 1px solid var(--border-subtle);
   padding-bottom: 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
 .tab-btn {
@@ -882,6 +899,8 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .tab-btn:hover {
   color: var(--text-primary);
@@ -1320,4 +1339,226 @@ body {
     justify-content: center;
     padding: 0.5rem 0;
   }
+}
+
+
+/* ==========================================================
+   GraphSentinel Deep Learning & Benchmark Modal Styles
+   ========================================================== */
+
+/* Modal Backdrop */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(4, 7, 15, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.modal-dialog {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 245, 255, 0.15);
+  width: 100%;
+  max-width: 1000px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalEnter 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalEnter {
+  from { opacity: 0; transform: scale(0.96) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-header {
+  padding: 1.5rem 1.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  background: var(--bg-card);
+}
+
+.modal-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0.35rem 0 0.25rem;
+}
+
+.modal-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.modal-body {
+  padding: 1.75rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Benchmark Table */
+.table-container {
+  overflow-x: auto;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+}
+
+.benchmark-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  text-align: left;
+}
+
+.benchmark-table th {
+  background: var(--bg-main);
+  color: var(--text-secondary);
+  font-weight: 700;
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid var(--border-strong);
+  white-space: nowrap;
+}
+
+.benchmark-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.benchmark-table tr:last-child td {
+  border-bottom: none;
+}
+
+.benchmark-table tr.highlight-row {
+  background: rgba(0, 245, 255, 0.08);
+  border-left: 3px solid var(--cyan-400);
+}
+
+.benchmark-table tr.highlight-row td {
+  color: var(--cyan-400);
+  font-weight: 700;
+}
+
+.badge-pass {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: var(--emerald-400);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.badge-fail {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(255, 51, 102, 0.2);
+  border: 1px solid rgba(255, 51, 102, 0.4);
+  color: var(--rose-400);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+/* DL Inference Tab & Gauge UI */
+.dl-gauge-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.dl-gauge-card {
+  background: var(--bg-main);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.dl-gauge-label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.5rem;
+}
+
+.dl-gauge-val {
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  margin-bottom: 0.5rem;
+}
+
+.dl-meter-track {
+  width: 100%;
+  height: 7px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.dl-meter-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.dl-gauge-status {
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+}
+
+/* Candidate Comparison Horizontal Bars */
+.comp-row {
+  margin-bottom: 0.85rem;
+}
+
+.comp-meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  margin-bottom: 0.3rem;
+}
+
+.comp-bar-bg {
+  width: 100%;
+  height: 9px;
+  background: var(--bg-main);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.comp-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease;
 }

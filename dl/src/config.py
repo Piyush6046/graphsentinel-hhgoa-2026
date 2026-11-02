@@ -115,6 +115,7 @@ class PipelineConfig:
     mlp_batch_size: int = 1024
     mlp_epochs: int = 30
     mlp_weight_decay: float = 1e-4
+    mlp_patience: int = 7  # early-stop patience (epochs without val PR-AUC improvement)
 
     # Autoencoder Hyperparameters (Trained strictly on legitimate train samples)
     ae_latent_dim: int = 16

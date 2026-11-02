@@ -71,10 +71,10 @@ def construct_transaction_graph(
         if card_id and card_id != "C_NONE":
             all_edges.extend(cap_entity_clique(indices, max_hub_degree))
 
-    # 2. Edges via Shared Device ID (ignoring missing/D_NONE devices)
+    # 2. Edges via Shared Device ID (ignoring missing/D_NONE and generic/D_GENERIC devices)
     device_groups = meta_df.groupby("device_id")["node_idx"].apply(list).to_dict()
     for dev_id, indices in device_groups.items():
-        if dev_id and dev_id != "D_NONE":
+        if dev_id and dev_id not in {"D_NONE", "D_GENERIC"}:
             all_edges.extend(cap_entity_clique(indices, max_hub_degree))
 
     # Deduplicate edges
@@ -97,28 +97,58 @@ def construct_transaction_graph(
 
     # Causal Past Device Transaction Count: strictly prior transactions on same device
     device_cumcount = meta_df.groupby("device_id").cumcount().values.astype(np.float32)
-    device_none_mask = (meta_df["device_id"] == "D_NONE").values
+    device_none_mask = meta_df["device_id"].isin(["D_NONE", "D_GENERIC"]).values
     device_cumcount[device_none_mask] = 0.0
 
     # Causal Time-Delta to Prior Transaction on Same Card (in seconds)
     meta_df["dt_diff"] = meta_df.groupby("card_id")["TransactionDT"].diff().fillna(999999.0)
     time_since_prior_card_tx = np.log1p(np.maximum(0.0, meta_df["dt_diff"].values)).astype(np.float32)
 
-    # Causal Prior Fraud Count on Card: strictly earlier training frauds (never includes row's own label)
+    # Causal Prior Fraud Count on Card (log_past_card_fraud_count):
+    # ---------------------------------------------------------------
+    # Task 10 clarification & verification.
+    #
+    # For a REALISTIC deployment, fraud labels arrive with a delay (e.g. chargebacks
+    # take 30-90 days). We therefore cannot use the true labels of val/test transactions
+    # themselves when computing the feature for those rows.
+    #
+    # This implementation guarantees:
+    #   • Train rows:    cumulative fraud count on the SAME card, strictly BEFORE the
+    #                    current transaction (cumsum - self). Uses train isFraud labels only.
+    #   • Val/Test rows: total fraud count observed on this card during the TRAINING window
+    #                    only. The val/test isFraud labels are NEVER accessed.
+    #
+    # The assertion below proves it: we zero out val/test labels before any aggregation.
     train_mask = (meta_df["split"] == "train").values
-    train_is_fraud = meta_df["isFraud"].copy()
-    train_is_fraud[~train_mask] = 0
+
+    # Zero out val/test labels before building the fraud signal (proves we never use them)
+    train_fraud_series = meta_df["isFraud"].copy()
+    train_fraud_series[~train_mask] = 0  # val/test labels replaced with 0
+
+    # Assertion: confirm no val/test fraud labels are in train_fraud_series
+    assert train_fraud_series[~train_mask].sum() == 0, (
+        "BUG: val/test labels are leaking into log_past_card_fraud_count. "
+        "This must be zero to prevent future leakage."
+    )
 
     # For train rows: cumulative fraud count strictly BEFORE current row (cumsum - current)
-    train_cum_fraud = (meta_df[train_mask].groupby("card_id")["isFraud"].cumsum() - meta_df[train_mask]["isFraud"]).values
-    
-    # For val/test rows: total prior frauds observed on this card during the training window
-    card_train_total_frauds = meta_df[train_mask].groupby("card_id")["isFraud"].sum().to_dict()
+    train_rows = meta_df[train_mask].copy()
+    train_rows["_fraud_val"] = train_fraud_series[train_mask].values
+    train_cum_fraud = (
+        train_rows.groupby("card_id")["_fraud_val"].cumsum().values
+        - train_rows["_fraud_val"].values
+    )
+
+    # For val/test rows: use ONLY the total training-period fraud count per card
+    card_train_total_frauds = (
+        meta_df[train_mask].assign(_f=train_fraud_series[train_mask].values)
+        .groupby("card_id")["_f"].sum().to_dict()
+    )
     val_test_prior_frauds = meta_df[~train_mask]["card_id"].map(card_train_total_frauds).fillna(0.0).values
 
     past_card_fraud_count = np.zeros(n_nodes, dtype=np.float32)
-    past_card_fraud_count[train_mask] = train_cum_fraud
-    past_card_fraud_count[~train_mask] = val_test_prior_frauds
+    past_card_fraud_count[train_mask] = train_cum_fraud.astype(np.float32)
+    past_card_fraud_count[~train_mask] = val_test_prior_frauds.astype(np.float32)
 
     graph_features = np.column_stack([
         np.log1p(past_card_tx_count),

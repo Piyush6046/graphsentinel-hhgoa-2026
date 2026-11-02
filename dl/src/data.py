@@ -52,15 +52,25 @@ def construct_composite_keys(df: pd.DataFrame) -> pd.DataFrame:
     device_cols = ["DeviceInfo", "id_30", "id_31", "id_33", "DeviceType"]
     available_dev_cols = [c for c in device_cols if c in df.columns]
 
+    generic_tokens = {"none", "unknown", "other", "nan", "null", ""}
     if available_dev_cols:
         def make_device_key(row):
             parts = [str(row[c]).strip().lower() if pd.notna(row[c]) else "none" for c in available_dev_cols]
-            if all(p == "none" for p in parts):
+            non_generic = [p for p in parts if p not in generic_tokens]
+            if not non_generic or len(non_generic) < 2:
+                # Need at least 2 specific signals (e.g. specific device model + screen/OS)
                 return "D_NONE"
             raw_key = "_".join(parts)
             return "D_" + hashlib.md5(raw_key.encode()).hexdigest()[:12]
 
         df["device_id"] = df.apply(make_device_key, axis=1)
+
+        # Down-weight/drop devices linked to > 15 distinct cards as generic hubs
+        dev_card_counts = df.groupby("device_id")["card_id"].nunique()
+        overused_devs = set(dev_card_counts[dev_card_counts > 15].index)
+        overused_devs.discard("D_NONE")
+        if overused_devs:
+            df.loc[df["device_id"].isin(overused_devs), "device_id"] = "D_GENERIC"
     else:
         df["device_id"] = "D_NONE"
 

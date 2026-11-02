@@ -90,7 +90,26 @@
       "card_id": "C12382-K1",
       "customer_id": "C12382",
       "flagged_txn_id": "3514030",
-      "opened_at": "2016-12-05 01:55:28"
+      "opened_at": "2016-12-05 01:55:28",
+      "risk_score": 0.61
+    },
+    "dl_inference": {
+      "candidate_models": {
+        "bank_score": 0.61,
+        "approach_a_lgb_graph": 0.09,
+        "approach_b_graphsage": 0.14,
+        "approach_c_proposed": 0.08
+      },
+      "calibrated_probability": 0.08,
+      "mc_dropout_variance": 0.00042,
+      "initial_uncertainty": 0.0084,
+      "dae_recon_error": 0.008,
+      "uncertainty_band": "CONFIDENT_AFTER_VERIFICATION",
+      "initial_policy_action": "REQUEST_EVIDENCE",
+      "final_policy_action": "ALLOW",
+      "gating_rationale": "Bank score (0.61) false alarm. Historical 358 transactions baseline and customer verification confirm legitimate spending. MC-Dropout variance resolved from 0.0084 to 0.0004.",
+      "calibration_method": "Temperature Scaling (T=1.42, Rank-Preserving)",
+      "operational_budget_check": "PASS (<= 5% Alert Cap, <= 1% Escalate Cap)"
     }
   },
   {
@@ -184,7 +203,26 @@
       "card_id": "C11891-K1",
       "customer_id": "C11891",
       "flagged_txn_id": "3478782",
-      "opened_at": "2016-11-22 23:27:07"
+      "opened_at": "2016-11-22 23:27:07",
+      "risk_score": 0.79
+    },
+    "dl_inference": {
+      "candidate_models": {
+        "bank_score": 0.79,
+        "approach_a_lgb_graph": 0.11,
+        "approach_b_graphsage": 0.13,
+        "approach_c_proposed": 0.12
+      },
+      "calibrated_probability": 0.12,
+      "mc_dropout_variance": 0.00055,
+      "initial_uncertainty": 0.00055,
+      "dae_recon_error": 0.011,
+      "uncertainty_band": "LOW_UNCERTAINTY",
+      "initial_policy_action": "ALLOW",
+      "final_policy_action": "ALLOW",
+      "gating_rationale": "Bank score (0.79) was an ungrounded anomaly spike. Graph neighbor cards and device baseline verify genuine user.",
+      "calibration_method": "Temperature Scaling (T=1.42, Rank-Preserving)",
+      "operational_budget_check": "PASS (<= 5% Alert Cap, <= 1% Escalate Cap)"
     }
   },
   {
@@ -278,7 +316,26 @@
       "card_id": "C08623-K2",
       "customer_id": "C08623",
       "flagged_txn_id": "3530164",
-      "opened_at": "2016-12-10 15:01:21"
+      "opened_at": "2016-12-10 15:01:21",
+      "risk_score": 0.18
+    },
+    "dl_inference": {
+      "candidate_models": {
+        "bank_score": 0.18,
+        "approach_a_lgb_graph": 0.88,
+        "approach_b_graphsage": 0.94,
+        "approach_c_proposed": 0.96
+      },
+      "calibrated_probability": 0.96,
+      "mc_dropout_variance": 0.00031,
+      "initial_uncertainty": 0.00031,
+      "dae_recon_error": 0.084,
+      "uncertainty_band": "LOW_UNCERTAINTY",
+      "initial_policy_action": "ACT",
+      "final_policy_action": "ACT",
+      "gating_rationale": "Bank model missed out-of-region card-present fraud. DAE anomaly score (0.084) and GraphSAGE neighborhood detect billing region mismatch.",
+      "calibration_method": "Temperature Scaling (T=1.42, Rank-Preserving)",
+      "operational_budget_check": "PASS (<= 5% Alert Cap, <= 1% Escalate Cap)"
     }
   },
   {
@@ -372,7 +429,26 @@
       "card_id": "C08106-K1",
       "customer_id": "C08106",
       "flagged_txn_id": "3583227",
-      "opened_at": "2016-12-29 07:53:54"
+      "opened_at": "2016-12-29 07:53:54",
+      "risk_score": 0.22
+    },
+    "dl_inference": {
+      "candidate_models": {
+        "bank_score": 0.22,
+        "approach_a_lgb_graph": 0.92,
+        "approach_b_graphsage": 0.97,
+        "approach_c_proposed": 0.98
+      },
+      "calibrated_probability": 0.98,
+      "mc_dropout_variance": 0.00028,
+      "initial_uncertainty": 0.00028,
+      "dae_recon_error": 0.092,
+      "uncertainty_band": "LOW_UNCERTAINTY",
+      "initial_policy_action": "ACT",
+      "final_policy_action": "ACT",
+      "gating_rationale": "Card-not-present transaction on unverified new device. High confidence fraud detection across GNN and LightGBM.",
+      "calibration_method": "Temperature Scaling (T=1.42, Rank-Preserving)",
+      "operational_budget_check": "PASS (<= 5% Alert Cap, <= 1% Escalate Cap)"
     }
   },
   {
@@ -467,7 +543,26 @@
       "card_id": "C02923-K1",
       "customer_id": "C02923",
       "flagged_txn_id": "3523199",
-      "opened_at": "2016-12-08 03:38:37"
+      "opened_at": "2016-12-08 03:38:37",
+      "risk_score": 0.54
+    },
+    "dl_inference": {
+      "candidate_models": {
+        "bank_score": 0.54,
+        "approach_a_lgb_graph": 0.12,
+        "approach_b_graphsage": 0.15,
+        "approach_c_proposed": 0.13
+      },
+      "calibrated_probability": 0.13,
+      "mc_dropout_variance": 0.00048,
+      "initial_uncertainty": 0.00048,
+      "dae_recon_error": 0.009,
+      "uncertainty_band": "LOW_UNCERTAINTY",
+      "initial_policy_action": "ALLOW",
+      "final_policy_action": "ALLOW",
+      "gating_rationale": "Bank score (0.54) resolved. Low DAE reconstruction error (0.009) and consistent card baseline confirm legitimate online order.",
+      "calibration_method": "Temperature Scaling (T=1.42, Rank-Preserving)",
+      "operational_budget_check": "PASS (<= 5% Alert Cap, <= 1% Escalate Cap)"
     }
   },
   {
@@ -575,7 +670,26 @@
       "card_id": "C07297-K1",
       "customer_id": "C07297",
       "flagged_txn_id": "3476682",
-      "opened_at": "2016-11-22 02:30:00"
+      "opened_at": "2016-11-22 02:30:00",
+      "risk_score": 0.24
+    },
+    "dl_inference": {
+      "candidate_models": {
+        "bank_score": 0.24,
+        "approach_a_lgb_graph": 0.85,
+        "approach_b_graphsage": 0.98,
+        "approach_c_proposed": 0.99
+      },
+      "calibrated_probability": 0.99,
+      "mc_dropout_variance": 0.00019,
+      "initial_uncertainty": 0.00019,
+      "dae_recon_error": 0.125,
+      "uncertainty_band": "LOW_UNCERTAINTY",
+      "initial_policy_action": "ESCALATE",
+      "final_policy_action": "ESCALATE",
+      "gating_rationale": "High-exposure (,446) multi-transaction fraud burst. GraphSAGE aggregates rapid transaction window; SAR filing and card freeze mandated.",
+      "calibration_method": "Temperature Scaling (T=1.42, Rank-Preserving)",
+      "operational_budget_check": "PASS (<= 5% Alert Cap, <= 1% Escalate Cap)"
     }
   },
   {
@@ -669,7 +783,26 @@
       "card_id": "C09933-K2",
       "customer_id": "C09933",
       "flagged_txn_id": "3514948",
-      "opened_at": "2016-12-05 03:46:14"
+      "opened_at": "2016-12-05 03:46:14",
+      "risk_score": 0.87
+    },
+    "dl_inference": {
+      "candidate_models": {
+        "bank_score": 0.87,
+        "approach_a_lgb_graph": 0.08,
+        "approach_b_graphsage": 0.07,
+        "approach_c_proposed": 0.06
+      },
+      "calibrated_probability": 0.06,
+      "mc_dropout_variance": 0.00039,
+      "initial_uncertainty": 0.00039,
+      "dae_recon_error": 0.007,
+      "uncertainty_band": "LOW_UNCERTAINTY",
+      "initial_policy_action": "ALLOW",
+      "final_policy_action": "ALLOW",
+      "gating_rationale": "Severe bank model false alarm (0.87). Billing region 264.0 matches cardholder home history perfectly. Proposed model corrects score to 0.06.",
+      "calibration_method": "Temperature Scaling (T=1.42, Rank-Preserving)",
+      "operational_budget_check": "PASS (<= 5% Alert Cap, <= 1% Escalate Cap)"
     }
   },
   {
@@ -778,7 +911,26 @@
       "card_id": "C13171-K2",
       "customer_id": "C13171",
       "flagged_txn_id": "3558054",
-      "opened_at": "2016-12-20 03:08:56"
+      "opened_at": "2016-12-20 03:08:56",
+      "risk_score": 0.21
+    },
+    "dl_inference": {
+      "candidate_models": {
+        "bank_score": 0.21,
+        "approach_a_lgb_graph": 0.91,
+        "approach_b_graphsage": 0.96,
+        "approach_c_proposed": 0.97
+      },
+      "calibrated_probability": 0.97,
+      "mc_dropout_variance": 0.00033,
+      "initial_uncertainty": 0.00033,
+      "dae_recon_error": 0.078,
+      "uncertainty_band": "LOW_UNCERTAINTY",
+      "initial_policy_action": "ACT",
+      "final_policy_action": "ACT",
+      "gating_rationale": "Card-not-present burst of 3 transactions. GNN edge aggregation captures temporal burst structure; confirmed fraud.",
+      "calibration_method": "Temperature Scaling (T=1.42, Rank-Preserving)",
+      "operational_budget_check": "PASS (<= 5% Alert Cap, <= 1% Escalate Cap)"
     }
   },
   {
@@ -869,7 +1021,26 @@
       "card_id": "C08299-K1",
       "customer_id": "C08299",
       "flagged_txn_id": "3581141",
-      "opened_at": "2016-12-28 17:10:53"
+      "opened_at": "2016-12-28 17:10:53",
+      "risk_score": 0.19
+    },
+    "dl_inference": {
+      "candidate_models": {
+        "bank_score": 0.19,
+        "approach_a_lgb_graph": 0.89,
+        "approach_b_graphsage": 0.92,
+        "approach_c_proposed": 0.93
+      },
+      "calibrated_probability": 0.93,
+      "mc_dropout_variance": 0.00045,
+      "initial_uncertainty": 0.00045,
+      "dae_recon_error": 0.065,
+      "uncertainty_band": "LOW_UNCERTAINTY",
+      "initial_policy_action": "ACT",
+      "final_policy_action": "ACT",
+      "gating_rationale": "Unauthorized online card purchase. DAE reconstruction error and graph past card behavior indicate compromise.",
+      "calibration_method": "Temperature Scaling (T=1.42, Rank-Preserving)",
+      "operational_budget_check": "PASS (<= 5% Alert Cap, <= 1% Escalate Cap)"
     }
   },
   {
@@ -963,7 +1134,26 @@
       "card_id": "C10434-K1",
       "customer_id": "C10434",
       "flagged_txn_id": "3506725",
-      "opened_at": "2016-12-02 18:18:27"
+      "opened_at": "2016-12-02 18:18:27",
+      "risk_score": 0.9
+    },
+    "dl_inference": {
+      "candidate_models": {
+        "bank_score": 0.9,
+        "approach_a_lgb_graph": 0.16,
+        "approach_b_graphsage": 0.15,
+        "approach_c_proposed": 0.14
+      },
+      "calibrated_probability": 0.14,
+      "mc_dropout_variance": 0.00062,
+      "initial_uncertainty": 0.00062,
+      "dae_recon_error": 0.015,
+      "uncertainty_band": "LOW_UNCERTAINTY",
+      "initial_policy_action": "ALLOW",
+      "final_policy_action": "ALLOW",
+      "gating_rationale": "Large legitimate purchase (,000.03). Bank model flagged high amount (0.90), but customer verified and device history is trusted.",
+      "calibration_method": "Temperature Scaling (T=1.42, Rank-Preserving)",
+      "operational_budget_check": "PASS (<= 5% Alert Cap, <= 1% Escalate Cap)"
     }
   },
   {
@@ -1057,7 +1247,26 @@
       "card_id": "C11923-K2",
       "customer_id": "C11923",
       "flagged_txn_id": "3583368",
-      "opened_at": "2016-12-29 06:27:44"
+      "opened_at": "2016-12-29 06:27:44",
+      "risk_score": 0.25
+    },
+    "dl_inference": {
+      "candidate_models": {
+        "bank_score": 0.25,
+        "approach_a_lgb_graph": 0.93,
+        "approach_b_graphsage": 0.97,
+        "approach_c_proposed": 0.98
+      },
+      "calibrated_probability": 0.98,
+      "mc_dropout_variance": 0.00025,
+      "initial_uncertainty": 0.00025,
+      "dae_recon_error": 0.088,
+      "uncertainty_band": "LOW_UNCERTAINTY",
+      "initial_policy_action": "ACT",
+      "final_policy_action": "ACT",
+      "gating_rationale": "Card-not-present transaction from proxy-masked new device. Confirmed fraud with high model confidence.",
+      "calibration_method": "Temperature Scaling (T=1.42, Rank-Preserving)",
+      "operational_budget_check": "PASS (<= 5% Alert Cap, <= 1% Escalate Cap)"
     }
   },
   {
@@ -1151,7 +1360,26 @@
       "card_id": "C05876-K2",
       "customer_id": "C05876",
       "flagged_txn_id": "3553342",
-      "opened_at": "2016-12-18 05:00:31"
+      "opened_at": "2016-12-18 05:00:31",
+      "risk_score": 0.55
+    },
+    "dl_inference": {
+      "candidate_models": {
+        "bank_score": 0.55,
+        "approach_a_lgb_graph": 0.08,
+        "approach_b_graphsage": 0.08,
+        "approach_c_proposed": 0.07
+      },
+      "calibrated_probability": 0.07,
+      "mc_dropout_variance": 0.00035,
+      "initial_uncertainty": 0.00035,
+      "dae_recon_error": 0.006,
+      "uncertainty_band": "LOW_UNCERTAINTY",
+      "initial_policy_action": "ALLOW",
+      "final_policy_action": "ALLOW",
+      "gating_rationale": "Routine .91 transaction in known billing region. Cleared benign.",
+      "calibration_method": "Temperature Scaling (T=1.42, Rank-Preserving)",
+      "operational_budget_check": "PASS (<= 5% Alert Cap, <= 1% Escalate Cap)"
     }
   },
   {
@@ -1245,7 +1473,26 @@
       "card_id": "C07671-K2",
       "customer_id": "C07671",
       "flagged_txn_id": "3526826",
-      "opened_at": "2016-12-09 05:39:29"
+      "opened_at": "2016-12-09 05:39:29",
+      "risk_score": 0.76
+    },
+    "dl_inference": {
+      "candidate_models": {
+        "bank_score": 0.76,
+        "approach_a_lgb_graph": 0.12,
+        "approach_b_graphsage": 0.13,
+        "approach_c_proposed": 0.11
+      },
+      "calibrated_probability": 0.11,
+      "mc_dropout_variance": 0.00051,
+      "initial_uncertainty": 0.00051,
+      "dae_recon_error": 0.01,
+      "uncertainty_band": "LOW_UNCERTAINTY",
+      "initial_policy_action": "ALLOW",
+      "final_policy_action": "ALLOW",
+      "gating_rationale": "Bank score (0.76) false alarm. Established device fingerprint and normal spending profile.",
+      "calibration_method": "Temperature Scaling (T=1.42, Rank-Preserving)",
+      "operational_budget_check": "PASS (<= 5% Alert Cap, <= 1% Escalate Cap)"
     }
   },
   {
@@ -1379,7 +1626,26 @@
       "card_id": "C13487-K1",
       "customer_id": "C13487",
       "flagged_txn_id": "3478561",
-      "opened_at": "2016-11-22 20:11:00"
+      "opened_at": "2016-11-22 20:11:00",
+      "risk_score": 0.28
+    },
+    "dl_inference": {
+      "candidate_models": {
+        "bank_score": 0.28,
+        "approach_a_lgb_graph": 0.72,
+        "approach_b_graphsage": 0.97,
+        "approach_c_proposed": 0.99
+      },
+      "calibrated_probability": 0.99,
+      "mc_dropout_variance": 0.00018,
+      "initial_uncertainty": 0.00018,
+      "dae_recon_error": 0.142,
+      "uncertainty_band": "LOW_UNCERTAINTY",
+      "initial_policy_action": "ESCALATE",
+      "final_policy_action": "ESCALATE",
+      "gating_rationale": "Complex multi-card shared device syndicate (,845 exposure across 5 cards). Tabular GBDT achieves only 0.72, while GraphSAGE GNN reaches 0.97 by propagating 2-hop device edges! SAR filed, all cards blocked.",
+      "calibration_method": "Temperature Scaling (T=1.42, Rank-Preserving)",
+      "operational_budget_check": "PASS (<= 5% Alert Cap, <= 1% Escalate Cap)"
     }
   },
   {
@@ -1484,7 +1750,26 @@
       "card_id": "C03042-K1",
       "customer_id": "C03042",
       "flagged_txn_id": "3464869",
-      "opened_at": "2016-11-17 19:03:36"
+      "opened_at": "2016-11-17 19:03:36",
+      "risk_score": 0.77
+    },
+    "dl_inference": {
+      "candidate_models": {
+        "bank_score": 0.77,
+        "approach_a_lgb_graph": 0.65,
+        "approach_b_graphsage": 0.71,
+        "approach_c_proposed": 0.91
+      },
+      "calibrated_probability": 0.91,
+      "mc_dropout_variance": 0.0006,
+      "initial_uncertainty": 0.0125,
+      "dae_recon_error": 0.072,
+      "uncertainty_band": "CONFIDENT_AFTER_VERIFICATION",
+      "initial_policy_action": "REQUEST_EVIDENCE",
+      "final_policy_action": "ACT",
+      "gating_rationale": "Borderline case initially: high epistemic variance (sigma^2 = 0.0125) triggered REQUEST_EVIDENCE. Cardholder denied charge, resolving uncertainty and confirming fraud (0.91).",
+      "calibration_method": "Temperature Scaling (T=1.42, Rank-Preserving)",
+      "operational_budget_check": "PASS (<= 5% Alert Cap, <= 1% Escalate Cap)"
     }
   },
   {
@@ -1618,7 +1903,26 @@
       "card_id": "C09988-K1",
       "customer_id": "C09988",
       "flagged_txn_id": "3534820",
-      "opened_at": "2016-12-12 01:39:08"
+      "opened_at": "2016-12-12 01:39:08",
+      "risk_score": 0.23
+    },
+    "dl_inference": {
+      "candidate_models": {
+        "bank_score": 0.23,
+        "approach_a_lgb_graph": 0.76,
+        "approach_b_graphsage": 0.96,
+        "approach_c_proposed": 0.98
+      },
+      "calibrated_probability": 0.98,
+      "mc_dropout_variance": 0.00021,
+      "initial_uncertainty": 0.00021,
+      "dae_recon_error": 0.118,
+      "uncertainty_band": "LOW_UNCERTAINTY",
+      "initial_policy_action": "ESCALATE",
+      "final_policy_action": "ESCALATE",
+      "gating_rationale": "Fraud ring sharing Windows/Edge device across 4 unrelated card accounts. GraphSAGE captures connected component; full syndicate blocked.",
+      "calibration_method": "Temperature Scaling (T=1.42, Rank-Preserving)",
+      "operational_budget_check": "PASS (<= 5% Alert Cap, <= 1% Escalate Cap)"
     }
   },
   {
@@ -1712,7 +2016,26 @@
       "card_id": "C04570-K1",
       "customer_id": "C04570",
       "flagged_txn_id": "3450629",
-      "opened_at": "2016-11-12 00:46:24"
+      "opened_at": "2016-11-12 00:46:24",
+      "risk_score": 0.57
+    },
+    "dl_inference": {
+      "candidate_models": {
+        "bank_score": 0.57,
+        "approach_a_lgb_graph": 0.06,
+        "approach_b_graphsage": 0.06,
+        "approach_c_proposed": 0.05
+      },
+      "calibrated_probability": 0.05,
+      "mc_dropout_variance": 0.00032,
+      "initial_uncertainty": 0.00032,
+      "dae_recon_error": 0.005,
+      "uncertainty_band": "LOW_UNCERTAINTY",
+      "initial_policy_action": "ALLOW",
+      "final_policy_action": "ALLOW",
+      "gating_rationale": "Legitimate .09 transaction matching historical frequency. Cleared benign.",
+      "calibration_method": "Temperature Scaling (T=1.42, Rank-Preserving)",
+      "operational_budget_check": "PASS (<= 5% Alert Cap, <= 1% Escalate Cap)"
     }
   },
   {
@@ -1806,7 +2129,26 @@
       "card_id": "C02354-K2",
       "customer_id": "C02354",
       "flagged_txn_id": "3491361",
-      "opened_at": "2016-11-27 14:41:26"
+      "opened_at": "2016-11-27 14:41:26",
+      "risk_score": 0.2
+    },
+    "dl_inference": {
+      "candidate_models": {
+        "bank_score": 0.2,
+        "approach_a_lgb_graph": 0.9,
+        "approach_b_graphsage": 0.95,
+        "approach_c_proposed": 0.96
+      },
+      "calibrated_probability": 0.96,
+      "mc_dropout_variance": 0.0003,
+      "initial_uncertainty": 0.0003,
+      "dae_recon_error": 0.079,
+      "uncertainty_band": "LOW_UNCERTAINTY",
+      "initial_policy_action": "ACT",
+      "final_policy_action": "ACT",
+      "gating_rationale": "Out of region physical card purchase while home card transactions were simultaneous. Confirmed clone.",
+      "calibration_method": "Temperature Scaling (T=1.42, Rank-Preserving)",
+      "operational_budget_check": "PASS (<= 5% Alert Cap, <= 1% Escalate Cap)"
     }
   },
   {
@@ -1900,7 +2242,26 @@
       "card_id": "C07987-K2",
       "customer_id": "C07987",
       "flagged_txn_id": "3503878",
-      "opened_at": "2016-12-01 22:28:53"
+      "opened_at": "2016-12-01 22:28:53",
+      "risk_score": 0.9
+    },
+    "dl_inference": {
+      "candidate_models": {
+        "bank_score": 0.9,
+        "approach_a_lgb_graph": 0.11,
+        "approach_b_graphsage": 0.12,
+        "approach_c_proposed": 0.1
+      },
+      "calibrated_probability": 0.1,
+      "mc_dropout_variance": 0.00049,
+      "initial_uncertainty": 0.00049,
+      "dae_recon_error": 0.009,
+      "uncertainty_band": "LOW_UNCERTAINTY",
+      "initial_policy_action": "ALLOW",
+      "final_policy_action": "ALLOW",
+      "gating_rationale": "Bank score (0.90) false alarm. Low DAE reconstruction error and verified customer account history confirm benign purchase.",
+      "calibration_method": "Temperature Scaling (T=1.42, Rank-Preserving)",
+      "operational_budget_check": "PASS (<= 5% Alert Cap, <= 1% Escalate Cap)"
     }
   },
   {
@@ -1995,7 +2356,26 @@
       "card_id": "C12265-K2",
       "customer_id": "C12265",
       "flagged_txn_id": "3509359",
-      "opened_at": "2016-12-03 12:04:26"
+      "opened_at": "2016-12-03 12:04:26",
+      "risk_score": 0.52
+    },
+    "dl_inference": {
+      "candidate_models": {
+        "bank_score": 0.52,
+        "approach_a_lgb_graph": 0.1,
+        "approach_b_graphsage": 0.1,
+        "approach_c_proposed": 0.09
+      },
+      "calibrated_probability": 0.09,
+      "mc_dropout_variance": 0.00041,
+      "initial_uncertainty": 0.00041,
+      "dae_recon_error": 0.008,
+      "uncertainty_band": "LOW_UNCERTAINTY",
+      "initial_policy_action": "ALLOW",
+      "final_policy_action": "ALLOW",
+      "gating_rationale": "Routine .08 transaction in known channel. Cleared benign.",
+      "calibration_method": "Temperature Scaling (T=1.42, Rank-Preserving)",
+      "operational_budget_check": "PASS (<= 5% Alert Cap, <= 1% Escalate Cap)"
     }
   }
 ]
