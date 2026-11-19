@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY pyproject.toml /app/
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu \
-    && pip install --no-cache-dir scikit-learn scipy lightgbm \
+    && pip install --no-cache-dir scikit-learn scipy lightgbm xgboost matplotlib \
     && pip install --no-cache-dir -e .[dev]
 
 # Copy project source code
