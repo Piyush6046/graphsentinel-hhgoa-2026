@@ -23,6 +23,6 @@ graphsentinel = "fraud_agent.cli:main"
 where = ["src"]
 
 [tool.pytest.ini_options]
-pythonpath = ["src"]
-testpaths = ["tests"]
+pythonpath = [".", "src"]
+testpaths = ["tests", "dl/tests"]
 

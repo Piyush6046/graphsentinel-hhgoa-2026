@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  graphsentinel:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: graphsentinel-demo
+    ports:
+      - "4173:4173"
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
