@@ -4,7 +4,7 @@
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-ee4c2c.svg)](https://pytorch.org/)
 [![PyG](https://img.shields.io/badge/PyG-GraphSAGE-3C2179.svg)](https://pyg.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests Passing](https://img.shields.io/badge/Tests-17%20Passed-success.svg)](dl/tests/test_pipeline.py)
+[![Tests Passing](https://img.shields.io/badge/Tests-24%20Passed-success.svg)](dl/tests/test_pipeline.py)
 [![CI](https://github.com/Piyush6046/graphsentinel-hhgoa-2026/actions/workflows/ci.yml/badge.svg)](https://github.com/Piyush6046/graphsentinel-hhgoa-2026/actions/workflows/ci.yml)
 
 **Course Project:** Advanced Deep Learning  
@@ -145,14 +145,32 @@ In the Analyst Console:
 - Click **`📊 DL Benchmarks & Ablations`** in the top navigation bar to open the full empirical evaluation modal with Reliability Diagrams and Risk-Coverage curves.
 - Inspect the **`🕸️ Evidence Subgraph`** to see multi-hop card-device-transaction relationships.
 
-### 2. Run the Full Unit Test Suite
-Verify that all 17 unit tests pass across temporal isolation, feature leakage prevention, MC-dropout behavior, calibration, and policy constraints:
+### 2. Interactive CLI Fraud Investigation & Compliance Suite
+Investigate benchmark cases, inspect evidence, and generate regulatory audits directly from the terminal:
 
 ```bash
-python -m pytest tests dl/tests -v
+# Executive Portfolio Audit (verdict ratios, exposure, routing breakdown)
+python -m fraud_agent.cli audit
+
+# Query & filter cases by criteria (e.g. SAR filings, min exposure, actions)
+python -m fraud_agent.cli filter --sar-only
+python -m fraud_agent.cli filter --verdict fraud --min-exposure 500
+
+# Detailed investigation briefing for a specific case
+python -m fraud_agent.cli explain --case-id HHG-006
+
+# Export FinCEN Suspicious Activity Reports (SAR) to Markdown or JSON
+python -m fraud_agent.cli export-sar -o reports/fincen_sars.md
 ```
 
-### 3. Run the Deep Learning Pipeline on Kaggle (T4 GPU)
+### 3. Run the Full Unit Test Suite
+Verify that all 24 unit tests pass across temporal isolation, feature leakage prevention, MC-dropout behavior, calibration, policy constraints, and CLI commands:
+
+```bash
+python -m pytest -v
+```
+
+### 4. Run the Deep Learning Pipeline on Kaggle (T4 GPU)
 For training on the full 590,000 transaction dataset with GPU acceleration:
 
 ```bash
