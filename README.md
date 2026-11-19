@@ -5,6 +5,7 @@
 [![PyG](https://img.shields.io/badge/PyG-GraphSAGE-3C2179.svg)](https://pyg.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Tests Passing](https://img.shields.io/badge/Tests-17%20Passed-success.svg)](dl/tests/test_pipeline.py)
+[![CI](https://github.com/Piyush6046/graphsentinel-hhgoa-2026/actions/workflows/ci.yml/badge.svg)](https://github.com/Piyush6046/graphsentinel-hhgoa-2026/actions/workflows/ci.yml)
 
 **Course Project:** Advanced Deep Learning  
 **Topic:** Uncertainty-Aware Graph Learning for Card-Fraud Investigation and Next-Best-Action  
@@ -132,6 +133,9 @@ python scripts/run_demo.py
 
 # Or on Windows Command Prompt:
 run_demo.bat
+
+# Or using Docker:
+docker compose up --build
 ```
 Then open your browser to **`http://localhost:4173`**.
 
