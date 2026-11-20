@@ -254,3 +254,4 @@ The 20 exam cases (`cases/HHG-001.json` through `cases/HHG-020.json`) evaluate m
 - **Monte Carlo Dropout:** Gal, Y., & Ghahramani, Z. (2016). *Dropout as a Bayesian Approximation: Representing Model Uncertainty in Deep Learning*. ICML 2016.
 - **Temperature Scaling:** Guo, C., Pleiss, G., Sun, Y., & Weinberger, K. Q. (2017). *On Calibration of Modern Neural Networks*. ICML 2017.
 - **Regulatory Guidance:** US Department of the Treasury Financial Crimes Enforcement Network (FinCEN) SAR Narrative Guidance & FATF Cyber-Enabled Fraud Typologies.
+ 
